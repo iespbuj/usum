@@ -344,10 +344,8 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .badge-row{ display:flex; gap:6px; flex-wrap:wrap; }
 .badge-pip{
   width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  font-size:13px; font-weight:700; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:transform .15s;
-  user-select:none;
+  font-size:13px; font-weight:700; font-family:'Rajdhani',sans-serif;
 }
-.badge-pip:hover{ transform:scale(1.15); }
 .badge-pip.got{ border:1px solid var(--gold); background: radial-gradient(circle,var(--gold),#8a6a2e); color:#1c140a; }
 .badge-pip.not{ border:1px solid var(--border); background: var(--panel-2); color: var(--silver-dim); opacity:.75; }
 .ticket-card{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; height:100%; }
@@ -2191,7 +2189,7 @@ const MATCH1_LOSER_WHEEL = [
 let hearts = {}, teams = {}, history = [], tradesActive = [], tradesHistory = [];
 let tickets = {}, pendingPrizes = {};
 let dailyBonusDate = {}; // último día (YYYY-MM-DD) en que cada entrenador reclamó su bonus diario
-let money = {}, milestones = {}; // milestones: hitos marcados a mano por cada jugador (ver MILESTONE_TABLE)
+let money = {}, stamps = {}; // stamps: sellos del pasaporte (bitmask de 15 bits), sincronizados automáticamente por vidas_watcher_usum.py desde el save -- de aquí sale el level cap, sin marcar nada a mano
 let locationName = {}; // idem: ubicacion actual en el juego (zona/mapa)
 let collections = {}; // idem: coleccion completa (equipo+cajas) por entrenador, para poder ver/ofertar cualquier Pokémon
 let graveyard = {}; // idem: cementerio (Pokémon caídos) por entrenador
@@ -2203,13 +2201,6 @@ let normas = [];
 
 // Normas fijas del Triolocke. Se siembran solas la primera vez (si todavia
 // no estan en la lista) para no tener que anadirlas a mano una por una.
-// Hitos de progreso de la partida (equivalente a las medallas de gimnasio,
-// pero Alola no tiene gimnasios -- es una mezcla de pruebas de Totem,
-// combates de Kahuna y otros combates story-relevantes). A diferencia del
-// sistema de medallas de X/Y (un bit por medalla, leído directo del save),
-// esto NO se puede sacar automáticamente del save -- son reglas propias de
-// la partida, así que cada jugador los marca a mano en su perfil (clic en
-// el circulito). El level cap vigente es el del primer hito SIN marcar.
 const MILESTONE_TABLE = [
   { icon: '🏫', label: 'Profesora Emily',              cap: 10 },
   { icon: '🟡', label: 'Prueba de Ilima — Totem',       cap: 12 },
@@ -2228,6 +2219,20 @@ const MILESTONE_TABLE = [
   { icon: '🏆', label: 'Alto Mando',                    cap: 57 },
   { icon: '👑', label: 'Campeón/Hau',                   cap: 60 },
 ];
+// A qué sello automático (índice dentro de stampsOf(), 0-4: Melemele, Akala,
+// Ula'ula, Poni, Reto Insular completo) pertenece cada hito de la tabla de
+// arriba -- el save SOLO nos da el sello de "isla entera superada", no cada
+// prueba/kahuna suelta, así que agrupamos por isla: en cuanto el juego marca
+// esa isla como superada, todos los hitos de esa isla se dan por hechos.
+// Esto es automático al 100% (cero clics) aunque algo menos fino que la
+// lista original; si en algún momento localizamos las flags de EventWork de
+// cada prueba/kahuna suelta (jugando y mandándome saves de antes/después de
+// cada una, igual que hicimos con equipo/dinero/sellos) se puede afinar cada
+// hito por separado sin tocar nada de esto -- solo esta tabla.
+const MILESTONE_GROUP_END = [3, 7, 10, 14, 16]; // hito con indice < este valor -> pertenece a este grupo (0-4)
+function milestoneGroupOf(i){
+  return MILESTONE_GROUP_END.findIndex(end => i < end);
+}
 const DEFAULT_NORMAS = [
   'Cualquier Pokémon debilitado debe ser liberado.',
   'Solo se podrá capturar el primer Pokémon salvaje de cada ruta o zona.',
@@ -2547,7 +2552,7 @@ async function trackedStoreSet(flightKey, storageKey, value){
 
 async function loadAll(){
   const [profileResults, historyResult, tradesResult, duelResult, duelHistoryResult, duelBetsResult, challengeResult, finalResult, normasResult, sancionResult, loteriaResult, collectionResults, graveyardResults, manualFaintedResults] = await Promise.all([
-    Promise.all(TRAINERS.map(t => storeGet('us:profile:'+t, {hearts:20, team:[], tickets:0, pendingPrizes:[], dailyBonusDate:null, money:0, milestones:[], locationName:null}))),
+    Promise.all(TRAINERS.map(t => storeGet('us:profile:'+t, {hearts:20, team:[], tickets:0, pendingPrizes:[], dailyBonusDate:null, money:0, stamps:0, locationName:null}))),
     storeGet('us:history', []),
     storeGet('us:trades', {active:[], history:[]}),
     storeGet('us:duel', { scheduled:null, picks:[], bye:null, match1:null, match1Games:[], match1Winner:null, match1LoserPrize:null, finalGames:[], finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null }),
@@ -2576,7 +2581,7 @@ async function loadAll(){
     pendingPrizes[t] = profileResults[i].pendingPrizes || [];
     dailyBonusDate[t] = profileResults[i].dailyBonusDate || null;
     money[t] = profileResults[i].money || 0;
-    milestones[t] = Array.isArray(profileResults[i].milestones) ? profileResults[i].milestones : [];
+    stamps[t] = profileResults[i].stamps || 0;
     locationName[t] = profileResults[i].locationName || null;
   });
   if(!saveInFlight['history']) history = historyResult;
@@ -2605,7 +2610,7 @@ async function loadAll(){
   // saber si de verdad ha cambiado algo -- si no, el que llama puede
   // ahorrarse el render() (que es caro: reconstruye toda la pantalla).
   const signature = JSON.stringify({
-    hearts, teams, tickets, pendingPrizes, dailyBonusDate, money, milestones, locationName,
+    hearts, teams, tickets, pendingPrizes, dailyBonusDate, money, stamps, locationName,
     history, tradesActive, tradesHistory, duelState, duelHistory, duelBets, challengeState,
     normas, sancionState, loteria, collections, graveyard, manualFainted,
   });
@@ -2614,7 +2619,7 @@ async function loadAll(){
   return changed;
 }
 async function saveProfile(t){
-  return await trackedStoreSet('profile:'+t, 'us:profile:'+t, { hearts: hearts[t], team: teams[t], tickets: tickets[t]||0, pendingPrizes: pendingPrizes[t]||[], dailyBonusDate: dailyBonusDate[t]||null, money: money[t]||0, milestones: milestones[t]||[], locationName: locationName[t]||null });
+  return await trackedStoreSet('profile:'+t, 'us:profile:'+t, { hearts: hearts[t], team: teams[t], tickets: tickets[t]||0, pendingPrizes: pendingPrizes[t]||[], dailyBonusDate: dailyBonusDate[t]||null, money: money[t]||0, stamps: stamps[t]||0, locationName: locationName[t]||null });
 }
 
 
@@ -3187,30 +3192,27 @@ function render(){
 function combatWinsOf(t){
   return duelHistory.filter(d=> d.champion === t).length;
 }
+// Los 5 sellos automáticos (offset confirmado en el save: 0x4408), en el
+// mismo orden que TRIAL_STAMP_BITS ya definido más abajo en el parser:
+// [Melemele superada, Akala superada, Ula'ula superada, Poni superada, Reto Insular completo]
+function stampsOf(t){
+  const raw = stamps[t]||0;
+  return TRIAL_STAMP_BITS.map(bit => (raw & (1<<bit)) !== 0);
+}
 function milestonesOf(t){
-  const arr = milestones[t] || [];
-  return Array.from({length:MILESTONE_TABLE.length}, (_,i)=> !!arr[i]);
+  const st = stampsOf(t);
+  return MILESTONE_TABLE.map((_, i) => !!st[milestoneGroupOf(i)]);
 }
 function milestoneCountOf(t){
   return milestonesOf(t).filter(Boolean).length;
 }
-// Level cap vigente: el del primer hito que TODAVIA no está marcado (en
-// orden de la tabla). Si ya están todos marcados, no hay cap (null).
-// Al ser marcado a mano (no se puede sacar del save), si algún hito se
-// marca "fuera de orden" simplemente no cuenta para el cap hasta que los
-// anteriores también estén marcados -- así el cap nunca sube por error.
+// Level cap vigente: el del primer hito que todavía no está cubierto por su
+// sello de isla. Si ya están los 5 sellos, no hay cap (null).
 function currentLevelCap(t){
   const arr = milestonesOf(t);
   const idx = arr.findIndex(v => !v);
   if (idx === -1) return null; // todos los hitos superados
   return MILESTONE_TABLE[idx];
-}
-async function toggleMilestone(t, i){
-  const arr = milestonesOf(t).slice();
-  arr[i] = !arr[i];
-  milestones[t] = arr;
-  render();
-  await saveProfile(t);
 }
 // Pokémon del equipo (no cajas, solo cuentan los que se usan en combate) que
 // se pasan del level cap actual. Vacío si no hay cap (8/8 medallas) o si
@@ -3408,9 +3410,9 @@ function renderProfile(app, t){
           <div style="font-size:13px;color:var(--silver-dim);">💰 Dinero</div>
           <div class="stat-money-value">${(money[t]||0).toLocaleString('es-ES')}</div>
         </div>
-        <div style="font-size:11px;color:var(--silver-dim);margin-bottom:8px;letter-spacing:.5px;">🏅 HITOS (${milestoneCountOf(t)}/${MILESTONE_TABLE.length}) · toca uno para marcarlo</div>
+        <div style="font-size:11px;color:var(--silver-dim);margin-bottom:8px;letter-spacing:.5px;">🏅 HITOS (${milestoneCountOf(t)}/${MILESTONE_TABLE.length}) · automático desde el save</div>
         <div class="badge-row">
-          ${milestonesOf(t).map((got,i)=>`<div class="badge-pip ${got?'got':'not'}" title="${MILESTONE_TABLE[i].label} (cap Nv.${MILESTONE_TABLE[i].cap})" onclick="toggleMilestone('${t}',${i})">${MILESTONE_TABLE[i].icon}</div>`).join('')}
+          ${milestonesOf(t).map((got,i)=>`<div class="badge-pip ${got?'got':'not'}" title="${MILESTONE_TABLE[i].label} (cap Nv.${MILESTONE_TABLE[i].cap})">${MILESTONE_TABLE[i].icon}</div>`).join('')}
         </div>
         ${(()=>{ const cap = currentLevelCap(t); return `
         <div style="font-size:11px;color:var(--silver-dim);margin-top:10px;letter-spacing:.5px;">

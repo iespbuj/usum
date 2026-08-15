@@ -3,31 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Triolocke · X</title>
+<title>Triolocke · Ultra Sol</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
 
 :root{
-  --bg: #070b18;
-  --bg-elev: #0e1730;
-  --panel: #121c3a;
-  --panel-2: #172447;
-  --border: #2c3f6e;
-  --silver: #c3d0f2;
-  --silver-dim: #7488b8;
-  --silver-bright: #eef3ff;
-  --accent: #4f7fff;
-  --accent-dim: #2c4a94;
+  --bg: #150b08;
+  --bg-elev: #241207;
+  --panel: #2c1710;
+  --panel-2: #3a2015;
+  --border: #5a3018;
+  --silver: #e8cfae;
+  --silver-dim: #a9805c;
+  --silver-bright: #fff3e0;
+  --accent: #ff6a3d;
+  --accent-dim: #a83a1e;
   --danger: #e0435f;
   --danger-dim: #7a2138;
-  --gold: #dab566;
+  --gold: #e6b656;
 }
 
 *{ box-sizing: border-box; }
 html,body{ margin:0; padding:0; }
 
 body{
-  background: radial-gradient(ellipse at 50% -10%, #16244f 0%, var(--bg) 55%);
+  background: radial-gradient(ellipse at 50% -10%, #4a2610 0%, var(--bg) 55%);
   color: var(--silver);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
@@ -49,19 +49,19 @@ header::before{
   content:"";
   position:absolute; top:-120px; left:50%; transform:translateX(-50%);
   width: 480px; height: 240px;
-  background: radial-gradient(circle, rgba(79,127,255,0.20) 0%, rgba(79,127,255,0) 70%);
+  background: radial-gradient(circle, rgba(255,106,61,0.20) 0%, rgba(255,106,61,0) 70%);
   pointer-events:none;
 }
 .mega-stone{
   width: 20px; height: 20px; margin: 0 auto 12px;
-  background: linear-gradient(135deg, var(--accent) 0%, #b98bff 50%, var(--gold) 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, #ffcf7a 50%, var(--gold) 100%);
   transform: rotate(45deg);
-  box-shadow: 0 0 18px rgba(79,127,255,0.55), 0 0 30px rgba(185,139,255,0.25);
+  box-shadow: 0 0 18px rgba(255,106,61,0.55), 0 0 30px rgba(230,182,86,0.30);
   animation: mega-pulse 3.2s ease-in-out infinite;
 }
 @keyframes mega-pulse{
-  0%,100%{ box-shadow: 0 0 18px rgba(79,127,255,0.55), 0 0 30px rgba(185,139,255,0.25); }
-  50%{ box-shadow: 0 0 26px rgba(79,127,255,0.8), 0 0 42px rgba(185,139,255,0.4); }
+  0%,100%{ box-shadow: 0 0 18px rgba(255,106,61,0.55), 0 0 30px rgba(230,182,86,0.30); }
+  50%{ box-shadow: 0 0 26px rgba(255,106,61,0.8), 0 0 42px rgba(230,182,86,0.45); }
 }
 .logo{
   font-family: 'Rajdhani', sans-serif;
@@ -311,7 +311,7 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
   content:"";
   position:absolute; top:-110px; left:50%; transform:translateX(-50%);
   width: 380px; height: 210px;
-  background: radial-gradient(circle, rgba(79,127,255,0.16) 0%, rgba(79,127,255,0) 70%);
+  background: radial-gradient(circle, rgba(255,106,61,0.16) 0%, rgba(255,106,61,0) 70%);
   pointer-events:none;
 }
 .profile-hero-medal{ font-size: 28px; line-height:1; position:relative; }
@@ -344,10 +344,12 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .badge-row{ display:flex; gap:6px; flex-wrap:wrap; }
 .badge-pip{
   width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  font-size:11px; font-weight:700; font-family:'Rajdhani',sans-serif;
+  font-size:13px; font-weight:700; font-family:'Rajdhani',sans-serif; cursor:pointer; transition:transform .15s;
+  user-select:none;
 }
+.badge-pip:hover{ transform:scale(1.15); }
 .badge-pip.got{ border:1px solid var(--gold); background: radial-gradient(circle,var(--gold),#8a6a2e); color:#1c140a; }
-.badge-pip.not{ border:1px solid var(--border); background: var(--panel-2); color: var(--silver-dim); }
+.badge-pip.not{ border:1px solid var(--border); background: var(--panel-2); color: var(--silver-dim); opacity:.75; }
 .ticket-card{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; height:100%; }
 .ticket-value{ font-family:'JetBrains Mono', monospace; font-size:32px; color: var(--silver-bright); font-weight:600; }
 .ticket-value span{ font-size:14px; color: var(--silver-dim); margin-left:4px; }
@@ -469,7 +471,7 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 }
 .trade-link::before{ top:0; height: calc(50% - 14px); }
 .trade-link::after{ bottom:0; height: calc(50% - 14px); transform: rotate(180deg); }
-.trade-link svg{ width:22px; height:22px; position:relative; z-index:1; filter: drop-shadow(0 0 6px rgba(79,127,255,0.45)); }
+.trade-link svg{ width:22px; height:22px; position:relative; z-index:1; filter: drop-shadow(0 0 6px rgba(255,106,61,0.45)); }
 
 .trade-side.empty-side{
   border: 1px dashed var(--border); border-radius: 12px;
@@ -587,7 +589,7 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .poke-detail-tag{
   position:absolute; top:10px; left:10px; font-size:10px; font-weight:600;
   padding: 3px 9px; border-radius:999px; letter-spacing:.3px;
-  background: rgba(79,127,255,0.16); color:#a9c3ff; border:1px solid rgba(79,127,255,0.4);
+  background: rgba(255,106,61,0.16); color:#ffcba0; border:1px solid rgba(255,106,61,0.4);
 }
 .poke-detail-tag.fainted{ background: rgba(224,92,92,0.16); color:#ff9a9a; border-color:rgba(224,92,92,0.4); }
 .poke-detail-grid{
@@ -1591,7 +1593,7 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
   padding: 14px 12px; text-align:center; position:relative; z-index:1;
 }
 .card-row-block.dealer-block{ box-shadow: 0 0 0 1px rgba(224,67,95,0.25) inset; }
-.card-row-block.player-block{ box-shadow: 0 0 0 1px rgba(79,127,255,0.3) inset; }
+.card-row-block.player-block{ box-shadow: 0 0 0 1px rgba(255,106,61,0.3) inset; }
 .card-row-label{
   font-family:'Rajdhani',sans-serif; font-weight:800; letter-spacing:1.5px; font-size:13px;
   text-transform:uppercase; color: var(--silver-dim); margin-bottom: 10px;
@@ -1670,7 +1672,7 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .nine-choice-btn .nc-title{ font-weight:800; letter-spacing:1px; font-size:14px; text-transform:uppercase; }
 .nine-choice-btn .nc-mult{ font-size: 11px; color: var(--silver-dim); margin-top:3px; font-family:'JetBrains Mono',monospace; }
 .nine-choice-btn.nc-player{ border-color: var(--accent-dim); }
-.nine-choice-btn.nc-player:hover{ border-color: var(--accent); box-shadow: 0 6px 16px rgba(79,127,255,0.25); }
+.nine-choice-btn.nc-player:hover{ border-color: var(--accent); box-shadow: 0 6px 16px rgba(255,106,61,0.25); }
 .nine-choice-btn.nc-tie{ border-color: var(--gold); }
 .nine-choice-btn.nc-tie:hover{ border-color: var(--neon-yellow); box-shadow: 0 6px 16px rgba(255,225,79,0.25); }
 .nine-choice-btn.nc-banker{ border-color: var(--danger-dim); }
@@ -1770,9 +1772,9 @@ footer{
 .location-pill{
   display:inline-block; margin: 4px auto 6px; padding: 3px 10px;
   font-size: 11px; font-weight: 600; letter-spacing: .3px;
-  color: #a9c3ff;
-  background: rgba(79,127,255,0.14);
-  border: 1px solid rgba(79,127,255,0.4);
+  color: #ffcba0;
+  background: rgba(255,106,61,0.14);
+  border: 1px solid rgba(255,106,61,0.4);
   border-radius: 999px;
   white-space: nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 100%;
 }
@@ -2189,7 +2191,7 @@ const MATCH1_LOSER_WHEEL = [
 let hearts = {}, teams = {}, history = [], tradesActive = [], tradesHistory = [];
 let tickets = {}, pendingPrizes = {};
 let dailyBonusDate = {}; // último día (YYYY-MM-DD) en que cada entrenador reclamó su bonus diario
-let money = {}, badgesRaw = {}; // sincronizados automáticamente por vidas_watcher.py desde el save
+let money = {}, milestones = {}; // milestones: hitos marcados a mano por cada jugador (ver MILESTONE_TABLE)
 let locationName = {}; // idem: ubicacion actual en el juego (zona/mapa)
 let collections = {}; // idem: coleccion completa (equipo+cajas) por entrenador, para poder ver/ofertar cualquier Pokémon
 let graveyard = {}; // idem: cementerio (Pokémon caídos) por entrenador
@@ -2201,15 +2203,30 @@ let normas = [];
 
 // Normas fijas del Triolocke. Se siembran solas la primera vez (si todavia
 // no estan en la lista) para no tener que anadirlas a mano una por una.
-const LEVEL_CAP_TABLE = [
-  { gym: 1, leader: 'Viola',   cap: 12 },
-  { gym: 2, leader: 'Grant',   cap: 25 },
-  { gym: 3, leader: 'Korrina', cap: 32 },
-  { gym: 4, leader: 'Ramos',   cap: 34 },
-  { gym: 5, leader: 'Clemont', cap: 37 },
-  { gym: 6, leader: 'Valerie', cap: 42 },
-  { gym: 7, leader: 'Olympia', cap: 48 },
-  { gym: 8, leader: 'Wulfric', cap: 59 },
+// Hitos de progreso de la partida (equivalente a las medallas de gimnasio,
+// pero Alola no tiene gimnasios -- es una mezcla de pruebas de Totem,
+// combates de Kahuna y otros combates story-relevantes). A diferencia del
+// sistema de medallas de X/Y (un bit por medalla, leído directo del save),
+// esto NO se puede sacar automáticamente del save -- son reglas propias de
+// la partida, así que cada jugador los marca a mano en su perfil (clic en
+// el circulito). El level cap vigente es el del primer hito SIN marcar.
+const MILESTONE_TABLE = [
+  { icon: '🏫', label: 'Profesora Emily',              cap: 10 },
+  { icon: '🟡', label: 'Prueba de Ilima — Totem',       cap: 12 },
+  { icon: '🥊', label: 'Kahuna Hala',                   cap: 16 },
+  { icon: '💧', label: 'Prueba de Lana — Totem',        cap: 20 },
+  { icon: '🔥', label: 'Prueba de Kiawe — Totem',       cap: 22 },
+  { icon: '🌿', label: 'Prueba de Mallow — Totem',      cap: 24 },
+  { icon: '🪨', label: 'Kahuna Olivia',                 cap: 28 },
+  { icon: '⚡', label: 'Prueba de Sophocles — Totem',   cap: 33 },
+  { icon: '👻', label: 'Prueba de Acerola — Totem',     cap: 35 },
+  { icon: '🌑', label: 'Kahuna Nanu',                   cap: 44 },
+  { icon: '🐉', label: 'Prueba de Kommo-o',             cap: 49 },
+  { icon: '🌌', label: 'Ultra Necrozma',                cap: 60 },
+  { icon: '🧚', label: 'Prueba de Mina — Totem Ribombee', cap: 55 },
+  { icon: '🏝️', label: 'Kahuna Hapu',                   cap: 54 },
+  { icon: '🏆', label: 'Alto Mando',                    cap: 57 },
+  { icon: '👑', label: 'Campeón/Hau',                   cap: 60 },
 ];
 const DEFAULT_NORMAS = [
   'Cualquier Pokémon debilitado debe ser liberado.',
@@ -2445,7 +2462,7 @@ const FINAL_CATEGORY_POOL = [
   { id:'hunter',    label:'El mejor cazador',          icon:'🎯', compute:(t)=> allMonsOf(t).length, unit:'Pokémon capturados' },
   { id:'clumsy',    label:'El más torpe',              icon:'🪦', compute:(t)=> (graveyard[t]||[]).length, unit:'Pokémon caídos' },
   { id:'shiny',     label:'Suerte de shiny',           icon:'✨', compute:(t)=> allMonsOf(t).filter(m=>m.shiny).length, unit:'shinies encontrados' },
-  { id:'badges',    label:'El más veterano',           icon:'🏅', compute:(t)=> gymBadgeCountOf(t), unit:'medallas' },
+  { id:'milestones', label:'El más veterano',           icon:'🏅', compute:(t)=> milestoneCountOf(t), unit:'hitos' },
   { id:'tickets',   label:'El más rico en fichas',     icon:'🎟️', compute:(t)=> tickets[t]||0, unit:'tickets' },
   { id:'dex',       label:'El enciclopedista',         icon:'📖', compute:(t)=> new Set(allMonsOf(t).map(m=>(m.speciesName||'').toLowerCase())).size, unit:'especies distintas' },
   { id:'strongest', label:'El equipo más potente',     icon:'💪', compute:(t)=> Math.max(0, ...allMonsOf(t).filter(m=>m.inTeam && m.level!=null).map(m=>m.level), 0), unit:'nivel máximo' },
@@ -2468,7 +2485,7 @@ async function loadNameLists(){
 }
 
 /* ---------------- Backend: Google Sheets via Apps Script ---------------- */
-const API_URL = 'https://script.google.com/macros/s/AKfycbyM5X3Kn-l0HpiCcA3jNsSx80-KnfCB8PJMqNVFzOKbjob4csjXNJhNDF0dIJ8RsRjf/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxTa6U7CqWUP4RS2mCyLSNT2x3Ftj7LhgECvIJgJdR7t1APgnFt9srIB98zsRHv9gls_A/exec';
 
 async function storeGet(key, def){
   for(let attempt=0; attempt<2; attempt++){
@@ -2530,20 +2547,20 @@ async function trackedStoreSet(flightKey, storageKey, value){
 
 async function loadAll(){
   const [profileResults, historyResult, tradesResult, duelResult, duelHistoryResult, duelBetsResult, challengeResult, finalResult, normasResult, sancionResult, loteriaResult, collectionResults, graveyardResults, manualFaintedResults] = await Promise.all([
-    Promise.all(TRAINERS.map(t => storeGet('x:profile:'+t, {hearts:20, team:[], tickets:0, pendingPrizes:[], dailyBonusDate:null, money:0, badges:0, locationName:null}))),
-    storeGet('x:history', []),
-    storeGet('x:trades', {active:[], history:[]}),
-    storeGet('x:duel', { scheduled:null, picks:[], bye:null, match1:null, match1Games:[], match1Winner:null, match1LoserPrize:null, finalGames:[], finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null }),
-    storeGet('x:duelHistory', []),
-    storeGet('x:duelBets', { match1: [], final: [] }),
-    storeGet('x:challenge', null),
-    storeGet('x:finalState', null),
-    storeGet('x:normas', []),
-    storeGet('x:sancion', { offender: null, prize: null }),
-    storeGet('x:loteria', { pot: 0, entries: [], history: [] }),
-    Promise.all(TRAINERS.map(t => storeGet('x:collection:'+t, {pids:{}}))),
-    Promise.all(TRAINERS.map(t => storeGet('x:graveyard:'+t, []))),
-    Promise.all(TRAINERS.map(t => storeGet('x:manualFainted:'+t, [])))
+    Promise.all(TRAINERS.map(t => storeGet('us:profile:'+t, {hearts:20, team:[], tickets:0, pendingPrizes:[], dailyBonusDate:null, money:0, milestones:[], locationName:null}))),
+    storeGet('us:history', []),
+    storeGet('us:trades', {active:[], history:[]}),
+    storeGet('us:duel', { scheduled:null, picks:[], bye:null, match1:null, match1Games:[], match1Winner:null, match1LoserPrize:null, finalGames:[], finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null }),
+    storeGet('us:duelHistory', []),
+    storeGet('us:duelBets', { match1: [], final: [] }),
+    storeGet('us:challenge', null),
+    storeGet('us:finalState', null),
+    storeGet('us:normas', []),
+    storeGet('us:sancion', { offender: null, prize: null }),
+    storeGet('us:loteria', { pot: 0, entries: [], history: [] }),
+    Promise.all(TRAINERS.map(t => storeGet('us:collection:'+t, {pids:{}}))),
+    Promise.all(TRAINERS.map(t => storeGet('us:graveyard:'+t, []))),
+    Promise.all(TRAINERS.map(t => storeGet('us:manualFainted:'+t, [])))
   ]);
   TRAINERS.forEach((t, i) => {
     if(saveInFlight['profile:'+t] > 0){
@@ -2559,7 +2576,7 @@ async function loadAll(){
     pendingPrizes[t] = profileResults[i].pendingPrizes || [];
     dailyBonusDate[t] = profileResults[i].dailyBonusDate || null;
     money[t] = profileResults[i].money || 0;
-    badgesRaw[t] = profileResults[i].badges || 0;
+    milestones[t] = Array.isArray(profileResults[i].milestones) ? profileResults[i].milestones : [];
     locationName[t] = profileResults[i].locationName || null;
   });
   if(!saveInFlight['history']) history = historyResult;
@@ -2588,7 +2605,7 @@ async function loadAll(){
   // saber si de verdad ha cambiado algo -- si no, el que llama puede
   // ahorrarse el render() (que es caro: reconstruye toda la pantalla).
   const signature = JSON.stringify({
-    hearts, teams, tickets, pendingPrizes, dailyBonusDate, money, badgesRaw, locationName,
+    hearts, teams, tickets, pendingPrizes, dailyBonusDate, money, milestones, locationName,
     history, tradesActive, tradesHistory, duelState, duelHistory, duelBets, challengeState,
     normas, sancionState, loteria, collections, graveyard, manualFainted,
   });
@@ -2597,7 +2614,7 @@ async function loadAll(){
   return changed;
 }
 async function saveProfile(t){
-  return await trackedStoreSet('profile:'+t, 'x:profile:'+t, { hearts: hearts[t], team: teams[t], tickets: tickets[t]||0, pendingPrizes: pendingPrizes[t]||[], dailyBonusDate: dailyBonusDate[t]||null, money: money[t]||0, badges: badgesRaw[t]||0, locationName: locationName[t]||null });
+  return await trackedStoreSet('profile:'+t, 'us:profile:'+t, { hearts: hearts[t], team: teams[t], tickets: tickets[t]||0, pendingPrizes: pendingPrizes[t]||[], dailyBonusDate: dailyBonusDate[t]||null, money: money[t]||0, milestones: milestones[t]||[], locationName: locationName[t]||null });
 }
 
 
@@ -2616,22 +2633,22 @@ async function checkDailyBonus(t){
   if(!ok) queueRetry('profile:'+t, ()=>saveProfile(t));
 }
 async function saveTrades(){
-  return await trackedStoreSet('trades', 'x:trades', { active: tradesActive, history: tradesHistory });
+  return await trackedStoreSet('trades', 'us:trades', { active: tradesActive, history: tradesHistory });
 }
 async function saveDuelState(){
-  return await trackedStoreSet('duel', 'x:duel', duelState);
+  return await trackedStoreSet('duel', 'us:duel', duelState);
 }
 async function saveDuelHistory(){
-  return await trackedStoreSet('duelHistory', 'x:duelHistory', duelHistory);
+  return await trackedStoreSet('duelHistory', 'us:duelHistory', duelHistory);
 }
 async function saveDuelBets(){
-  return await trackedStoreSet('duelBets', 'x:duelBets', duelBets);
+  return await trackedStoreSet('duelBets', 'us:duelBets', duelBets);
 }
 async function saveChallengeState(){
-  return await trackedStoreSet('challenge', 'x:challenge', challengeState);
+  return await trackedStoreSet('challenge', 'us:challenge', challengeState);
 }
 async function saveFinalState(){
-  return await trackedStoreSet('finalState', 'x:finalState', finalState);
+  return await trackedStoreSet('finalState', 'us:finalState', finalState);
 }
 
 /* ================================================================
@@ -2687,7 +2704,7 @@ async function submitFinalPassword(){
   if(err) err.textContent = '';
   // por si alguien más la ha desbloqueado justo antes que nosotros, comprobamos
   // el estado real del servidor antes de generar uno nuevo
-  const existing = await storeGet('x:finalState', null);
+  const existing = await storeGet('us:finalState', null);
   if(existing && existing.unlocked){
     finalState = existing;
   } else {
@@ -2895,7 +2912,7 @@ async function resolveDuelBets(matchKey, winner){
 }
 
 async function saveNormas(){
-  return await trackedStoreSet('normas', 'x:normas', normas);
+  return await trackedStoreSet('normas', 'us:normas', normas);
 }
 async function seedDefaultNormasIfMissing(){
   const defaultTextsSet = new Set(DEFAULT_NORMAS);
@@ -2925,10 +2942,10 @@ async function seedDefaultNormasIfMissing(){
   if(!ok) queueRetry('normas', saveNormas);
 }
 async function saveSancion(){
-  return await trackedStoreSet('sancion', 'x:sancion', sancionState);
+  return await trackedStoreSet('sancion', 'us:sancion', sancionState);
 }
 async function saveLoteria(){
-  return await trackedStoreSet('loteria', 'x:loteria', loteria);
+  return await trackedStoreSet('loteria', 'us:loteria', loteria);
 }
 
 function fmtTime(ts){
@@ -3002,7 +3019,7 @@ window.addEventListener('beforeunload', (e)=>{
 function pushHistory(text){
   history.unshift({id: crypto.randomUUID(), text, ts: Date.now()});
   history = history.slice(0, 300);
-  trackedStoreSet('history', 'x:history', history).then(ok=>{ if(!ok) queueRetry('history', ()=>trackedStoreSet('history', 'x:history', history)); });
+  trackedStoreSet('history', 'us:history', history).then(ok=>{ if(!ok) queueRetry('history', ()=>trackedStoreSet('history', 'us:history', history)); });
 }
 
 /* ---- Popup de novedades al abrir la web: solo una vez, luego no vuelve a
@@ -3170,19 +3187,30 @@ function render(){
 function combatWinsOf(t){
   return duelHistory.filter(d=> d.champion === t).length;
 }
-function gymBadgesOf(t){
-  const raw = badgesRaw[t]||0;
-  return Array.from({length:8}, (_,i)=> (raw & (1<<i)) !== 0);
+function milestonesOf(t){
+  const arr = milestones[t] || [];
+  return Array.from({length:MILESTONE_TABLE.length}, (_,i)=> !!arr[i]);
 }
-function gymBadgeCountOf(t){
-  return gymBadgesOf(t).filter(Boolean).length;
+function milestoneCountOf(t){
+  return milestonesOf(t).filter(Boolean).length;
 }
-// Level cap vigente segun las medallas ya conseguidas. Devuelve null si ya
-// se han conseguido las 8 (no hay cap, se acabaron las normas de nivel).
+// Level cap vigente: el del primer hito que TODAVIA no está marcado (en
+// orden de la tabla). Si ya están todos marcados, no hay cap (null).
+// Al ser marcado a mano (no se puede sacar del save), si algún hito se
+// marca "fuera de orden" simplemente no cuenta para el cap hasta que los
+// anteriores también estén marcados -- así el cap nunca sube por error.
 function currentLevelCap(t){
-  const badges = gymBadgeCountOf(t);
-  if (badges >= LEVEL_CAP_TABLE.length) return null;
-  return LEVEL_CAP_TABLE[badges];
+  const arr = milestonesOf(t);
+  const idx = arr.findIndex(v => !v);
+  if (idx === -1) return null; // todos los hitos superados
+  return MILESTONE_TABLE[idx];
+}
+async function toggleMilestone(t, i){
+  const arr = milestonesOf(t).slice();
+  arr[i] = !arr[i];
+  milestones[t] = arr;
+  render();
+  await saveProfile(t);
 }
 // Pokémon del equipo (no cajas, solo cuentan los que se usan en combate) que
 // se pasan del level cap actual. Vacío si no hay cap (8/8 medallas) o si
@@ -3325,10 +3353,10 @@ function renderHome(app){
           <div class="trainer-name">${NAMES[t]}</div>
           <div class="hearts-count ${h<0?'danger':''}">${h}<small>/20</small></div>
           <div class="combat-count">🏆 ${wins} combate${wins===1?'':'s'} ganado${wins===1?'':'s'}</div>
-          <div class="combat-count" style="margin-top:2px;">🏅 ${gymBadgeCountOf(t)}/8 · 💰 ${(money[t]||0).toLocaleString('es-ES')}</div>
+          <div class="combat-count" style="margin-top:2px;">🏅 ${milestoneCountOf(t)}/${MILESTONE_TABLE.length} · 💰 ${(money[t]||0).toLocaleString('es-ES')}</div>
           ${(()=>{ const cap = currentLevelCap(t); return cap
-            ? `<div class="combat-count" style="margin-top:2px;">🎯 Cap: Nv. ${cap.cap} (${cap.leader})</div>`
-            : `<div class="combat-count" style="margin-top:2px;">🎯 Sin cap (8/8 medallas)</div>`; })()}
+            ? `<div class="combat-count" style="margin-top:2px;">🎯 Cap: Nv. ${cap.cap} (${cap.icon} ${cap.label})</div>`
+            : `<div class="combat-count" style="margin-top:2px;">🎯 Sin cap (${MILESTONE_TABLE.length}/${MILESTONE_TABLE.length} hitos)</div>`; })()}
           ${(()=>{ const over = overCapMonsOf(t); return over.length===0 ? '' :
             `<div class="location-pill" style="background:rgba(255,176,32,0.14);border-color:rgba(255,176,32,0.4);color:#ffb020;margin-top:4px;">⚠️ ${over.length} sobrepasado${over.length===1?'':'s'}</div>`; })()}
           <div class="mini-team">
@@ -3380,13 +3408,13 @@ function renderProfile(app, t){
           <div style="font-size:13px;color:var(--silver-dim);">💰 Dinero</div>
           <div class="stat-money-value">${(money[t]||0).toLocaleString('es-ES')}</div>
         </div>
-        <div style="font-size:11px;color:var(--silver-dim);margin-bottom:8px;letter-spacing:.5px;">🏅 MEDALLAS (${gymBadgeCountOf(t)}/8)</div>
+        <div style="font-size:11px;color:var(--silver-dim);margin-bottom:8px;letter-spacing:.5px;">🏅 HITOS (${milestoneCountOf(t)}/${MILESTONE_TABLE.length}) · toca uno para marcarlo</div>
         <div class="badge-row">
-          ${gymBadgesOf(t).map((got,i)=>`<div class="badge-pip ${got?'got':'not'}" title="Medalla ${i+1}">${i+1}</div>`).join('')}
+          ${milestonesOf(t).map((got,i)=>`<div class="badge-pip ${got?'got':'not'}" title="${MILESTONE_TABLE[i].label} (cap Nv.${MILESTONE_TABLE[i].cap})" onclick="toggleMilestone('${t}',${i})">${MILESTONE_TABLE[i].icon}</div>`).join('')}
         </div>
         ${(()=>{ const cap = currentLevelCap(t); return `
         <div style="font-size:11px;color:var(--silver-dim);margin-top:10px;letter-spacing:.5px;">
-          🎯 LEVEL CAP: ${cap ? `Nv. ${cap.cap} <span style="opacity:.7;">(hasta vencer a ${cap.leader})</span>` : 'sin cap (8/8 medallas)'}
+          🎯 LEVEL CAP: ${cap ? `Nv. ${cap.cap} <span style="opacity:.7;">(hasta superar ${cap.icon} ${cap.label})</span>` : `sin cap (${MILESTONE_TABLE.length}/${MILESTONE_TABLE.length} hitos)`}
         </div>`; })()}
         ${(()=>{ const over = overCapMonsOf(t); if(over.length===0) return ''; return `
         <div style="font-size:12px;color:#ffb020;background:rgba(255,176,32,0.12);border:1px solid rgba(255,176,32,0.4);border-radius:8px;padding:8px 10px;margin-top:10px;">
@@ -3611,15 +3639,13 @@ function renderNormaText(text){
     <div class="level-cap-table" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="background:var(--panel-2);">
-          <th style="padding:6px 10px;text-align:left;color:var(--silver-dim);">Gimnasio</th>
-          <th style="padding:6px 10px;text-align:left;color:var(--silver-dim);">Líder</th>
+          <th style="padding:6px 10px;text-align:left;color:var(--silver-dim);">Hito</th>
           <th style="padding:6px 10px;text-align:left;color:var(--silver-dim);">Level cap</th>
         </tr></thead>
         <tbody>
-          ${LEVEL_CAP_TABLE.map(r=>`
+          ${MILESTONE_TABLE.map(r=>`
             <tr style="border-top:1px solid var(--border);">
-              <td style="padding:6px 10px;">${r.gym}</td>
-              <td style="padding:6px 10px;">${r.leader}</td>
+              <td style="padding:6px 10px;">${r.icon} ${r.label}</td>
               <td style="padding:6px 10px;color:var(--silver-bright);">${r.cap}</td>
             </tr>
           `).join('')}
@@ -6656,8 +6682,8 @@ async function toggleManualFainted(trainer, pid){
   manualFainted[trainer] = map;
   closeModal();
   render();
-  const ok = await trackedStoreSet('manualFainted:'+trainer, 'x:manualFainted:'+trainer, manualFainted[trainer]);
-  if(!ok) queueRetry('manualFainted:'+trainer, ()=>trackedStoreSet('manualFainted:'+trainer, 'x:manualFainted:'+trainer, manualFainted[trainer]));
+  const ok = await trackedStoreSet('manualFainted:'+trainer, 'us:manualFainted:'+trainer, manualFainted[trainer]);
+  if(!ok) queueRetry('manualFainted:'+trainer, ()=>trackedStoreSet('manualFainted:'+trainer, 'us:manualFainted:'+trainer, manualFainted[trainer]));
 }
 
 const ABILITY_REVEAL_COST = 20;

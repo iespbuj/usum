@@ -6349,9 +6349,13 @@ function readPokemon(rawSlot, hasBattleStats) {
     isNicknamed: !!((iv32 >>> 31) & 0x1),
   };
   // Amistad: el offset 0xEE que se probaba antes no era correcto (daba
-  // siempre 0). Como Showdown no lo necesita para nada, se deja fuera en
-  // vez de enseñar un dato inventado.
-  const friendship = null;
+  // siempre 0). El campo real es OriginalTrainerFriendship (0xCA) mientras
+  // el Pokemon no haya cambiado de entrenador; si CurrentHandler (0x93) no
+  // es 0 (se ha intercambiado), el valor vivo pasa a estar en
+  // HandlingTrainerFriendship (0xA2) en su lugar -- offsets confirmados
+  // contra el save real (Grubbin "Cuerno": CurrentHandler=0, amistad=69).
+  const currentHandler = dec[0x93];
+  const friendship = currentHandler === 0 ? dec[0xca] : dec[0xa2];
 
   // PS actual/max: solo existen en el bloque de combate que llevan los del
   // equipo (hasBattleStats), las cajas no los tienen -> confirmado contra

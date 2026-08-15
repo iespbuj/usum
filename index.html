@@ -69,7 +69,7 @@ header::before{
   font-size: 30px;
   letter-spacing: 6px;
   margin: 0;
-  background: linear-gradient(100deg, var(--silver-dim) 0%, var(--silver-bright) 25%, var(--accent) 45%, var(--silver-bright) 65%, var(--silver-dim) 100%);
+  background: linear-gradient(100deg, var(--gold) 0%, var(--silver-bright) 25%, var(--accent) 45%, var(--silver-bright) 65%, var(--gold) 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -107,8 +107,8 @@ nav{
   cursor:pointer;
   transition: all .15s ease;
 }
-.nav-btn:hover{ color: var(--silver-bright); border-color: var(--accent-dim); }
-.nav-btn.active{ background: var(--panel-2); color: var(--silver-bright); border-color: var(--accent); }
+.nav-btn:hover{ color: var(--silver-bright); border-color: var(--gold); }
+.nav-btn.active{ background: var(--panel-2); color: var(--silver-bright); border-color: var(--gold); box-shadow: 0 0 10px rgba(230,182,86,0.35), inset 0 0 8px rgba(230,182,86,0.12); }
 
 main{ max-width: 1000px; margin: 0 auto; padding: 20px; }
 
@@ -130,10 +130,10 @@ main{ max-width: 1000px; margin: 0 auto; padding: 20px; }
 }
 .profile-card:hover{
   transform: translateY(-4px);
-  border-color: var(--accent-dim);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  border-color: var(--gold);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 0 20px rgba(230,182,86,0.18);
 }
-.profile-card.rank-1{ order:2; padding-top: 30px; padding-bottom: 28px; border-color: var(--accent-dim); }
+.profile-card.rank-1{ order:2; padding-top: 30px; padding-bottom: 28px; border-color: var(--gold); box-shadow: 0 0 22px rgba(230,182,86,0.25); }
 .profile-card.rank-2{ order:1; opacity: .96; }
 .profile-card.rank-3{ order:3; opacity: .92; }
 
@@ -224,13 +224,14 @@ main{ max-width: 1000px; margin: 0 auto; padding: 20px; }
 
 button.primary{
   background: var(--panel-2);
-  border: 1px solid var(--accent-dim);
+  border: 1px solid var(--gold);
   color: var(--silver-bright);
   font-family:'Rajdhani', sans-serif; font-weight:600; letter-spacing:1px;
   padding: 10px 20px; border-radius: 10px; cursor:pointer; font-size:14px;
   transition: all .15s ease;
+  box-shadow: 0 0 0 rgba(230,182,86,0);
 }
-button.primary:hover{ border-color: var(--accent); background:#242a3b; }
+button.primary:hover{ border-color: var(--gold); background:#242a3b; box-shadow: 0 0 14px rgba(230,182,86,0.35); }
 button.danger-outline{
   background:transparent; border:1px solid var(--danger-dim); color: var(--danger);
   font-family:'Rajdhani', sans-serif; font-weight:600; letter-spacing:1px;
@@ -257,6 +258,16 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .section-label{
   font-family:'Rajdhani', sans-serif; letter-spacing:2px; text-transform:uppercase;
   color: var(--silver-dim); font-size:13px; margin: 24px 0 12px; text-align:center;
+  position: relative;
+}
+.section-label::before, .section-label::after{
+  content:''; display:inline-block; width: 18px; height:1px; vertical-align:middle;
+  background: linear-gradient(90deg, transparent, var(--gold));
+  margin: 0 8px 3px 0;
+}
+.section-label::after{
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 0 0 3px 8px;
 }
 .team-grid{
   display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
@@ -273,7 +284,9 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
   position:relative;
   min-height: 130px;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
+.poke-slot:hover{ border-color: var(--gold); box-shadow: 0 0 10px rgba(230,182,86,0.2); }
 .poke-slot img{ width:56px; height:56px; object-fit:contain; margin-bottom:6px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
 .poke-nick{ font-family:'Rajdhani', sans-serif; font-weight:700; color: var(--silver-bright); font-size:15px; }
 .poke-species{ font-size: 11px; color: var(--silver-dim); text-transform: capitalize; margin-top:1px; }
@@ -563,7 +576,7 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
   padding: 10px 12px; color: var(--silver-bright); font-family:'Inter', sans-serif; font-size: 14px;
   min-height: 90px; resize: vertical; font-family:'Inter', sans-serif;
 }
-.field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color: var(--accent-dim); }
+.field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 8px rgba(230,182,86,0.25); }
 .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top: 18px; }
 .news-list{ max-height: 320px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
 .news-item{
@@ -2305,9 +2318,9 @@ let sancionWheelRotation = 0;
 
 /* ---------------- CASINO ---------------- */
 const SLOT_MACHINES = [
-  { id:'vida',      name:'Guardián de la Vida',  emoji:'🦌', legendaries:['Xerneas'], img:'slotBeasts',    line:'La eternidad no espera. Tira ya.' },
-  { id:'equilibrio',name:'Guardián del Equilibrio', emoji:'🐍', legendaries:['Zygarde'], img:'slotGuardians', line:'El orden de Kalos, en tus manos.' },
-  { id:'mitos',     name:'Mitos de Kalos',       emoji:'💎', legendaries:['Diancie','Hoopa','Volcanion'], img:'slotTime',      line:'Rarezas de cine. Solo para los más suertudos.' },
+  { id:'vida',      name:'Guardián del Sol',  emoji:'☀️', legendaries:['Solgaleo'], img:'slotBeasts',    line:'El sol no espera a nadie. Tira ya.' },
+  { id:'equilibrio',name:'Guardián de la Luna', emoji:'🌙', legendaries:['Lunala'], img:'slotGuardians', line:'El equilibrio entre el día y la noche, en tus manos.' },
+  { id:'mitos',     name:'Mitos de Alola',       emoji:'💎', legendaries:['Magearna','Marshadow','Zeraora'], img:'slotTime',      line:'Rarezas de otra dimensión. Solo para los más suertudos.' },
   { id:'kanto',     name:'Aves de Kanto',        emoji:'🦅', legendaries:['Articuno','Zapdos','Moltres'], img:'slotKanto',     line:'Vieja escuela, viejas máquinas. Mucha suerte.' }
 ];
 const SLOT_SPIN_COST = 1;
@@ -5718,13 +5731,13 @@ function bo3Narration(games, p1, p2, isFinal){
       const ss = getSoulSilverRecord(p1, p2);
       if(ss){
         const variants = [
-          () => `📼 Aquí no hay historial de esta partida, pero sí de la anterior: en SoulSilver el marcador entre ${P1} y ${P2} quedó ${P1} ${ss[p1]}-${ss[p2]} ${P2}. Con esos números de fondo llega este primer cruce en Kalos, y el primer asalto se lo lleva <strong>${W}</strong> — ¿se repetirá la historia, o esta vez todo empieza de cero de verdad?`,
-          () => `📼 Nueva región, viejas cuentas pendientes. ${P1} y ${P2} ya se vieron las caras en SoulSilver (${P1} ${ss[p1]}-${ss[p2]} ${P2}), y aunque aquí el marcador arranca en blanco, ese precedente sigue pesando. El primer asalto en Kalos cae del lado de <strong>${W}</strong>.`,
-          () => `📼 Antes de Kalos hubo Johto. Aquella vez terminó ${P1} ${ss[p1]}-${ss[p2]} ${P2}, y aunque el contador de esta partida se pone a cero, el recuerdo no. El primer round de este nuevo capítulo lo gana <strong>${W}</strong> — toca ver si esta rivalidad sigue el mismo guion o le da la vuelta del todo.`,
+          () => `📼 Aquí no hay historial de esta partida, pero sí de la anterior: en SoulSilver el marcador entre ${P1} y ${P2} quedó ${P1} ${ss[p1]}-${ss[p2]} ${P2}. Con esos números de fondo llega este primer cruce en Alola, y el primer asalto se lo lleva <strong>${W}</strong> — ¿se repetirá la historia, o esta vez todo empieza de cero de verdad?`,
+          () => `📼 Nueva región, viejas cuentas pendientes. ${P1} y ${P2} ya se vieron las caras en SoulSilver (${P1} ${ss[p1]}-${ss[p2]} ${P2}), y aunque aquí el marcador arranca en blanco, ese precedente sigue pesando. El primer asalto en Alola cae del lado de <strong>${W}</strong>.`,
+          () => `📼 Antes de Alola hubo Johto. Aquella vez terminó ${P1} ${ss[p1]}-${ss[p2]} ${P2}, y aunque el contador de esta partida se pone a cero, el recuerdo no. El primer round de este nuevo capítulo lo gana <strong>${W}</strong> — toca ver si esta rivalidad sigue el mismo guion o le da la vuelta del todo.`,
           () => `📼 Hay partidas que terminan pero las rivalidades no. En SoulSilver quedó ${P1} ${ss[p1]}-${ss[p2]} ${P2}, y aunque han pasado región, consola y unos cuantos años, ${P1} y ${P2} se vuelven a encontrar. El primer asalto de esta nueva era lo firma <strong>${W}</strong>.`,
-          () => `📼 Los libros de Johto ya tienen un capítulo escrito sobre esto (${P1} ${ss[p1]}-${ss[p2]} ${P2}), pero Kalos empieza su propia historia desde cero. Eso sí, el primer golpe de esta nueva etapa lo da <strong>${W}</strong> — con o sin precedente, hay que ganárselo igual.`,
-          () => `📼 Rivalidad de toda la vida, escenario nuevo. Lo de SoulSilver (${P1} ${ss[p1]}-${ss[p2]} ${P2}) se queda como referencia, pero en Kalos manda lo de hoy — y hoy manda <strong>${W}</strong>, que se adelanta en el primer asalto.`,
-          ...(wMon ? [() => `📼 En SoulSilver el marcador quedó ${P1} ${ss[p1]}-${ss[p2]} ${P2}, pero eso fue otra región, otra época. Aquí y ahora, el primer golpe lo da <strong>${wMon.species}</strong>, del equipo de ${W} — Kalos empieza a escribir su propia versión de esta rivalidad.`] : []),
+          () => `📼 Los libros de Johto ya tienen un capítulo escrito sobre esto (${P1} ${ss[p1]}-${ss[p2]} ${P2}), pero Alola empieza su propia historia desde cero. Eso sí, el primer golpe de esta nueva etapa lo da <strong>${W}</strong> — con o sin precedente, hay que ganárselo igual.`,
+          () => `📼 Rivalidad de toda la vida, escenario nuevo. Lo de SoulSilver (${P1} ${ss[p1]}-${ss[p2]} ${P2}) se queda como referencia, pero en Alola manda lo de hoy — y hoy manda <strong>${W}</strong>, que se adelanta en el primer asalto.`,
+          ...(wMon ? [() => `📼 En SoulSilver el marcador quedó ${P1} ${ss[p1]}-${ss[p2]} ${P2}, pero eso fue otra región, otra época. Aquí y ahora, el primer golpe lo da <strong>${wMon.species}</strong>, del equipo de ${W} — Alola empieza a escribir su propia versión de esta rivalidad.`] : []),
         ];
         return pickNarrationVariant('g1_soulsilver', variants)();
       }

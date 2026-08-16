@@ -2598,12 +2598,21 @@ const STORE_FETCH_FAILED = Symbol('storeFetchFailed');
 // Freno compartido entre todas las peticiones al backend: si van muy
 // seguidas, a veces algo por el camino (Google o un intermediario) empieza
 // a devolver una pagina de verificacion en vez de los datos reales.
+//
+// OJO: esto tiene que ser una COLA de verdad, no una simple comprobacion de
+// "cuanto ha pasado desde la ultima vez". Si varias llamadas entran casi a
+// la vez (p.ej. un Promise.all con muchas storeGet), todas leerian el mismo
+// _backendLastCall ANTES de que ninguna lo actualizara (eso solo pasaba
+// tras el await), asi que todas calculaban practicamente la misma espera y
+// salian casi juntas en vez de una detras de otra. Encadenando cada
+// llamada detras de la anterior (_backendChain) se evita eso del todo.
 const BACKEND_MIN_GAP_MS = 350;
-let _backendLastCall = 0;
-async function _backendThrottle(){
-  const wait = BACKEND_MIN_GAP_MS - (Date.now() - _backendLastCall);
-  if(wait > 0) await new Promise(r=>setTimeout(r, wait));
-  _backendLastCall = Date.now();
+let _backendChain = Promise.resolve();
+function _backendThrottle(){
+  const run = _backendChain.then(() => new Promise(r => setTimeout(r, BACKEND_MIN_GAP_MS)));
+  // por si una peticion falla mas adelante, la cadena no debe romperse
+  _backendChain = run.catch(() => {});
+  return run;
 }
 function _looksLikeChallengePage(text){
   const head = text.slice(0,200).toLowerCase();
@@ -2669,6 +2678,55 @@ async function storeSet(key, val){
   return false;
 }
 
+// Lee varias claves en UNA sola peticion HTTP (usa el endpoint ?keys=... del
+// backend). keyDefaults es un array de {key, def}. Devuelve un objeto
+// key -> valor (ya con JSON.parse hecho y el valor por defecto aplicado si
+// la clave aun no existia), o STORE_FETCH_FAILED si el lote entero ha
+// fallado (nunca se devuelven resultados parciales: o se aplica todo, o
+// nada, igual que hacia antes el Promise.all de storeGet sueltos).
+async function storeGetBatch(keyDefaults){
+  const keys = keyDefaults.map(kd => kd.key);
+  const attempts = 3;
+  let lastLookedLikeChallenge = false;
+  for(let attempt=0; attempt<attempts; attempt++){
+    await _backendThrottle();
+    try{
+      const res = await fetch(`${API_URL}?keys=${encodeURIComponent(keys.join(','))}`);
+      const text = await res.text();
+      if(_looksLikeChallengePage(text)){
+        lastLookedLikeChallenge = true;
+        throw new Error('respuesta parece una pagina de verificacion, no JSON');
+      }
+      const map = JSON.parse(text);
+      if(map && map.__error){
+        throw new Error('error del backend: ' + map.__error);
+      }
+      const out = {};
+      const toInit = [];
+      for(const {key, def} of keyDefaults){
+        const raw = map[key];
+        if(raw === null || raw === undefined){
+          out[key] = def;
+          toInit.push({key, def}); // no existia todavia en la hoja
+        }else{
+          out[key] = JSON.parse(raw);
+        }
+      }
+      // Inicializa en segundo plano las claves que aun no existian (igual
+      // que hacia storeGet suelto), sin retrasar la respuesta de este lote.
+      toInit.forEach(({key, def}) => { storeSet(key, def).catch(()=>{}); });
+      return out;
+    }catch(e){
+      if(attempt===attempts-1){
+        console.error('storeGetBatch failed', e);
+        return STORE_FETCH_FAILED;
+      }
+      await new Promise(r=>setTimeout(r, lastLookedLikeChallenge ? 4000 : 400));
+    }
+  }
+  return STORE_FETCH_FAILED;
+}
+
 let saveInFlight = {}; // clave -> contador: >0 mientras hay un guardado en curso para esa clave.
                         // Mientras este >0, loadAll() NO pisa esos datos con lo que traiga el
                         // servidor (podria ser de un instante justo antes de este guardado).
@@ -2682,22 +2740,48 @@ async function trackedStoreSet(flightKey, storageKey, value){
 }
 
 async function loadAll(){
-  const [profileResults, historyResult, tradesResult, duelResult, duelHistoryResult, duelBetsResult, challengeResult, finalResult, normasResult, sancionResult, loteriaResult, collectionResults, graveyardResults, manualFaintedResults] = await Promise.all([
-    Promise.all(TRAINERS.map(t => storeGet('us:profile:'+t, {hearts:20, team:[], tickets:0, pendingPrizes:[], dailyBonusDate:null, money:0, stamps:0, locationName:null}))),
-    storeGet('us:history', []),
-    storeGet('us:trades', {active:[], history:[]}),
-    storeGet('us:duel', { scheduled:null, picks:[], bye:null, match1:null, match1Games:[], match1Winner:null, match1LoserPrize:null, finalGames:[], finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null }),
-    storeGet('us:duelHistory', []),
-    storeGet('us:duelBets', { match1: [], final: [] }),
-    storeGet('us:challenge', null),
-    storeGet('us:finalState', null),
-    storeGet('us:normas', []),
-    storeGet('us:sancion', { offender: null, prize: null }),
-    storeGet('us:loteria', { pot: 0, entries: [], history: [] }),
-    Promise.all(TRAINERS.map(t => storeGet('us:collection:'+t, {pids:{}}))),
-    Promise.all(TRAINERS.map(t => storeGet('us:graveyard:'+t, []))),
-    Promise.all(TRAINERS.map(t => storeGet('us:manualFainted:'+t, [])))
-  ]);
+  // Antes esto era un Promise.all con ~22 storeGet sueltos (uno por clave),
+  // disparados casi a la vez en cada refresco -- eso era lo que acababa
+  // provocando que Google devolviera paginas de verificacion en vez de los
+  // datos. Ahora es UNA sola peticion HTTP (?keys=...) que trae todo de
+  // golpe; el backend hace un unico candado + una unica lectura de la hoja.
+  const keyDefaults = [
+    ...TRAINERS.map(t => ({ key: 'us:profile:'+t, def: {hearts:20, team:[], tickets:0, pendingPrizes:[], dailyBonusDate:null, money:0, stamps:0, locationName:null} })),
+    { key: 'us:history', def: [] },
+    { key: 'us:trades', def: {active:[], history:[]} },
+    { key: 'us:duel', def: { scheduled:null, picks:[], bye:null, match1:null, match1Games:[], match1Winner:null, match1LoserPrize:null, finalGames:[], finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null } },
+    { key: 'us:duelHistory', def: [] },
+    { key: 'us:duelBets', def: { match1: [], final: [] } },
+    { key: 'us:challenge', def: null },
+    { key: 'us:finalState', def: null },
+    { key: 'us:normas', def: [] },
+    { key: 'us:sancion', def: { offender: null, prize: null } },
+    { key: 'us:loteria', def: { pot: 0, entries: [], history: [] } },
+    ...TRAINERS.map(t => ({ key: 'us:collection:'+t, def: {pids:{}} })),
+    ...TRAINERS.map(t => ({ key: 'us:graveyard:'+t, def: [] })),
+    ...TRAINERS.map(t => ({ key: 'us:manualFainted:'+t, def: [] })),
+  ];
+
+  const batch = await storeGetBatch(keyDefaults);
+  if(batch === STORE_FETCH_FAILED){
+    console.warn('loadAll: la peticion en lote ha fallado esta vez, no se aplica nada (se reintenta en el siguiente refresco)');
+    return false;
+  }
+
+  const profileResults = TRAINERS.map(t => batch['us:profile:'+t]);
+  const historyResult = batch['us:history'];
+  const tradesResult = batch['us:trades'];
+  const duelResult = batch['us:duel'];
+  const duelHistoryResult = batch['us:duelHistory'];
+  const duelBetsResult = batch['us:duelBets'];
+  const challengeResult = batch['us:challenge'];
+  const finalResult = batch['us:finalState'];
+  const normasResult = batch['us:normas'];
+  const sancionResult = batch['us:sancion'];
+  const loteriaResult = batch['us:loteria'];
+  const collectionResults = TRAINERS.map(t => batch['us:collection:'+t]);
+  const graveyardResults = TRAINERS.map(t => batch['us:graveyard:'+t]);
+  const manualFaintedResults = TRAINERS.map(t => batch['us:manualFainted:'+t]);
 
   // TODO O NADA: si ha fallado aunque sea uno solo de los 14 datos, no
   // tocamos NADA de lo que ya habia en pantalla -- ni siquiera los que si
@@ -2706,16 +2790,6 @@ async function loadAll(){
   // es lo que causaba el parpadeo/inconsistencias raras. El siguiente
   // refresco automatico (cada 6s) lo reintenta solo, sin que haga falta
   // recargar la pagina a mano.
-  const allResults = [
-    ...profileResults, historyResult, tradesResult, duelResult, duelHistoryResult,
-    duelBetsResult, challengeResult, finalResult, normasResult, sancionResult,
-    loteriaResult, ...collectionResults, ...graveyardResults, ...manualFaintedResults,
-  ];
-  if(allResults.some(r => r === STORE_FETCH_FAILED)){
-    console.warn('loadAll: al menos un dato ha fallado esta vez, no se aplica nada (se reintenta en el siguiente refresco)');
-    return false;
-  }
-
   TRAINERS.forEach((t, i) => {
     if(saveInFlight['profile:'+t] > 0){
       // hay un cambio tuyo (apuesta, premio, vida...) guardandose ahora mismo para

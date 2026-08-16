@@ -2588,14 +2588,40 @@ async function loadNameLists(){
 /* ---------------- Backend: Google Sheets via Apps Script ---------------- */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxTa6U7CqWUP4RS2mCyLSNT2x3Ftj7LhgECvIJgJdR7t1APgnFt9srIB98zsRHv9gls_A/exec';
 
+// Valor especial: significa "la peticion ha fallado / ha vuelto algo raro",
+// NUNCA "la clave esta vacia de verdad". loadAll() comprueba esto para
+// cada dato y, si lo ve, mantiene lo que ya habia en pantalla en vez de
+// sustituirlo por los valores por defecto (que es lo que causaba el
+// parpadeo a "20 vidas / sin Pokemon / sin cementerio").
+const STORE_FETCH_FAILED = Symbol('storeFetchFailed');
+
+// Freno compartido entre todas las peticiones al backend: si van muy
+// seguidas, a veces algo por el camino (Google o un intermediario) empieza
+// a devolver una pagina de verificacion en vez de los datos reales.
+const BACKEND_MIN_GAP_MS = 350;
+let _backendLastCall = 0;
+async function _backendThrottle(){
+  const wait = BACKEND_MIN_GAP_MS - (Date.now() - _backendLastCall);
+  if(wait > 0) await new Promise(r=>setTimeout(r, wait));
+  _backendLastCall = Date.now();
+}
+function _looksLikeChallengePage(text){
+  const head = text.slice(0,200).toLowerCase();
+  return head.startsWith('<!doctype') || head.startsWith('<html') || head.includes('ppconfig');
+}
+
 async function storeGet(key, def){
-  for(let attempt=0; attempt<2; attempt++){
+  const attempts = 3;
+  let lastLookedLikeChallenge = false;
+  for(let attempt=0; attempt<attempts; attempt++){
+    await _backendThrottle();
     try{
       const res = await fetch(`${API_URL}?key=${encodeURIComponent(key)}`);
       const text = await res.text();
       if(text === 'null' || text === ''){
         // no existe todavía en la hoja -> lo inicializamos con el valor por defecto
         try{
+          await _backendThrottle();
           await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
@@ -2604,27 +2630,36 @@ async function storeGet(key, def){
         }catch(e2){}
         return def;
       }
+      if(_looksLikeChallengePage(text)){
+        lastLookedLikeChallenge = true;
+        throw new Error('respuesta parece una pagina de verificacion, no JSON');
+      }
       return JSON.parse(text);
     }catch(e){
-      if(attempt===1){
+      if(attempt===attempts-1){
         console.error('storeGet failed', key, e);
-        return def;
+        return STORE_FETCH_FAILED;
       }
-      await new Promise(r=>setTimeout(r,300));
+      // Si parece que nos estan frenando, esperamos bastante mas antes de
+      // reintentar -- insistir rapido durante un bloqueo solo lo empeora.
+      await new Promise(r=>setTimeout(r, lastLookedLikeChallenge ? 4000 : 400));
     }
   }
-  return def;
+  return STORE_FETCH_FAILED;
 }
 async function storeSet(key, val){
-  const delays = [200, 600, 1200, 2000];
+  const delays = [400, 1200, 2500, 4000];
   for(let attempt=0; attempt<=delays.length; attempt++){
+    await _backendThrottle();
     try{
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
         body: JSON.stringify({ key, value: JSON.stringify(val) })
       });
-      const data = await res.json();
+      const text = await res.text();
+      if(_looksLikeChallengePage(text)) throw new Error('respuesta parece una pagina de verificacion, no JSON');
+      const data = JSON.parse(text);
       if(data && data.ok) return true;
     }catch(e){
       console.error('storeSet failed', key, attempt, e);
@@ -2671,6 +2706,7 @@ async function loadAll(){
       // refresco, cuando ya no haya nada en vuelo.
       return;
     }
+    if(profileResults[i] === STORE_FETCH_FAILED) return; // fallo de red: mantener lo que ya habia en pantalla
     hearts[t] = profileResults[i].hearts;
     teams[t] = profileResults[i].team;
     tickets[t] = profileResults[i].tickets || 0;
@@ -2680,20 +2716,21 @@ async function loadAll(){
     stamps[t] = profileResults[i].stamps || 0;
     locationName[t] = profileResults[i].locationName || null;
   });
-  if(!saveInFlight['history']) history = historyResult;
-  if(!saveInFlight['trades']){ tradesActive = tradesResult.active; tradesHistory = tradesResult.history; }
-  if(!saveInFlight['duel']) duelState = duelResult;
-  if(!saveInFlight['duelHistory']) duelHistory = duelHistoryResult;
-  if(!saveInFlight['duelBets']) duelBets = duelBetsResult;
-  if(!saveInFlight['challenge']) challengeState = challengeResult;
-  if(!saveInFlight['finalState']) finalState = finalResult;
-  if(!saveInFlight['normas']) normas = normasResult;
-  if(!saveInFlight['sancion']) sancionState = sancionResult;
-  if(!saveInFlight['loteria']) loteria = loteriaResult;
-  TRAINERS.forEach((t, i) => { collections[t] = collectionResults[i].pids || {}; });
-  TRAINERS.forEach((t, i) => { graveyard[t] = graveyardResults[i] || []; });
+  if(!saveInFlight['history'] && historyResult !== STORE_FETCH_FAILED) history = historyResult;
+  if(!saveInFlight['trades'] && tradesResult !== STORE_FETCH_FAILED){ tradesActive = tradesResult.active; tradesHistory = tradesResult.history; }
+  if(!saveInFlight['duel'] && duelResult !== STORE_FETCH_FAILED) duelState = duelResult;
+  if(!saveInFlight['duelHistory'] && duelHistoryResult !== STORE_FETCH_FAILED) duelHistory = duelHistoryResult;
+  if(!saveInFlight['duelBets'] && duelBetsResult !== STORE_FETCH_FAILED) duelBets = duelBetsResult;
+  if(!saveInFlight['challenge'] && challengeResult !== STORE_FETCH_FAILED) challengeState = challengeResult;
+  if(!saveInFlight['finalState'] && finalResult !== STORE_FETCH_FAILED) finalState = finalResult;
+  if(!saveInFlight['normas'] && normasResult !== STORE_FETCH_FAILED) normas = normasResult;
+  if(!saveInFlight['sancion'] && sancionResult !== STORE_FETCH_FAILED) sancionState = sancionResult;
+  if(!saveInFlight['loteria'] && loteriaResult !== STORE_FETCH_FAILED) loteria = loteriaResult;
+  TRAINERS.forEach((t, i) => { if(collectionResults[i] !== STORE_FETCH_FAILED) collections[t] = collectionResults[i].pids || {}; });
+  TRAINERS.forEach((t, i) => { if(graveyardResults[i] !== STORE_FETCH_FAILED) graveyard[t] = graveyardResults[i] || []; });
   TRAINERS.forEach((t, i) => {
     if(saveInFlight['manualFainted:'+t] > 0) return;
+    if(manualFaintedResults[i] === STORE_FETCH_FAILED) return; // fallo de red: mantener lo que ya habia
     const raw = manualFaintedResults[i];
     // compatibilidad: el formato viejo era un array de pids (todos forzados a
     // "muerto"); el nuevo es un mapa pid -> true/false (fuerza en cualquier

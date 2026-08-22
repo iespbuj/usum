@@ -5844,9 +5844,9 @@ function spinWheel(){
 }
 
 // Resultados de la partida anterior (SoulSilver), para usar como precedente
-// cuando dos entrenadores no se han enfrentado nunca en esta partida de X/Y.
+// cuando dos entrenadores no se han enfrentado nunca en esta partida (USUM).
 // Se rellena a mano -- clave "trainerA-trainerB" en orden alfabetico, con
-// las victorias de cada uno. Vacio por ahora.
+// las victorias de cada uno.
 const SOULSILVER_HISTORY = {
   'alex-iker': { alex: 0, iker: 1 },
   'alex-joel': { alex: 1, joel: 1 },
@@ -5855,6 +5855,20 @@ const SOULSILVER_HISTORY = {
 function getSoulSilverRecord(a, b){
   const key = [a,b].sort().join('-');
   return SOULSILVER_HISTORY[key] || null;
+}
+
+// Resultados de la partida de Pokémon X (la inmediatamente anterior a esta,
+// posterior a SoulSilver), mismo formato que SOULSILVER_HISTORY. Cuando dos
+// entrenadores no se han enfrentado nunca en USUM, este precedente tiene
+// prioridad sobre el de SoulSilver por ser el más reciente.
+const POKEMON_X_HISTORY = {
+  'alex-iker': { alex: 1, iker: 4 },
+  'alex-joel': { alex: 2, joel: 0 },
+  'iker-joel': { iker: 3, joel: 0 },
+};
+function getPokemonXRecord(a, b){
+  const key = [a,b].sort().join('-');
+  return POKEMON_X_HISTORY[key] || null;
 }
 
 // ---- Narracion de cada juego del BO3: varias variantes por categoria, sin
@@ -5892,6 +5906,19 @@ function bo3Narration(games, p1, p2, isFinal){
   if(gameNum === 1){
     const { wins: priorWins, total } = headToHeadTally(p1, p2);
     if(total === 0){
+      const px = getPokemonXRecord(p1, p2);
+      if(px){
+        const variants = [
+          () => `🕹️ Aquí no hay historial de esta partida, pero sí de la anterior: en Pokémon X el marcador entre ${P1} y ${P2} quedó ${P1} ${px[p1]}-${px[p2]} ${P2}. Con esos números de fondo llega este primer cruce en Alola, y el primer asalto se lo lleva <strong>${W}</strong> — ¿se repetirá la historia, o esta vez todo empieza de cero de verdad?`,
+          () => `🕹️ Nueva región, viejas cuentas pendientes. ${P1} y ${P2} ya se vieron las caras en Pokémon X (${P1} ${px[p1]}-${px[p2]} ${P2}), y aunque aquí el marcador arranca en blanco, ese precedente sigue pesando. El primer asalto en Alola cae del lado de <strong>${W}</strong>.`,
+          () => `🕹️ Antes de Alola hubo Kalos. Aquella vez terminó ${P1} ${px[p1]}-${px[p2]} ${P2}, y aunque el contador de esta partida se pone a cero, el recuerdo no. El primer round de este nuevo capítulo lo gana <strong>${W}</strong> — toca ver si esta rivalidad sigue el mismo guion o le da la vuelta del todo.`,
+          () => `🕹️ Hay partidas que terminan pero las rivalidades no. En Pokémon X quedó ${P1} ${px[p1]}-${px[p2]} ${P2}, y aunque han pasado región, consola y unos cuantos años, ${P1} y ${P2} se vuelven a encontrar. El primer asalto de esta nueva era lo firma <strong>${W}</strong>.`,
+          () => `🕹️ Los libros de Kalos ya tienen un capítulo escrito sobre esto (${P1} ${px[p1]}-${px[p2]} ${P2}), pero Alola empieza su propia historia desde cero. Eso sí, el primer golpe de esta nueva etapa lo da <strong>${W}</strong> — con o sin precedente, hay que ganárselo igual.`,
+          () => `🕹️ Rivalidad de toda la vida, escenario nuevo. Lo de Pokémon X (${P1} ${px[p1]}-${px[p2]} ${P2}) se queda como referencia, pero en Alola manda lo de hoy — y hoy manda <strong>${W}</strong>, que se adelanta en el primer asalto.`,
+          ...(wMon ? [() => `🕹️ En Pokémon X el marcador quedó ${P1} ${px[p1]}-${px[p2]} ${P2}, pero eso fue otra región, otra época. Aquí y ahora, el primer golpe lo da <strong>${wMon.species}</strong>, del equipo de ${W} — Alola empieza a escribir su propia versión de esta rivalidad.`] : []),
+        ];
+        return pickNarrationVariant('g1_pokemonx', variants)();
+      }
       const ss = getSoulSilverRecord(p1, p2);
       if(ss){
         const variants = [

@@ -5917,6 +5917,17 @@ function bo3Narration(games, p1, p2, isFinal){
           () => `🕹️ Rivalidad de toda la vida, escenario nuevo. Lo de Pokémon X (${P1} ${px[p1]}-${px[p2]} ${P2}) se queda como referencia, pero en Alola manda lo de hoy — y hoy manda <strong>${W}</strong>, que se adelanta en el primer asalto.`,
           ...(wMon ? [() => `🕹️ En Pokémon X el marcador quedó ${P1} ${px[p1]}-${px[p2]} ${P2}, pero eso fue otra región, otra época. Aquí y ahora, el primer golpe lo da <strong>${wMon.species}</strong>, del equipo de ${W} — Alola empieza a escribir su propia versión de esta rivalidad.`] : []),
         ];
+        const isAlexIker = (p1 === 'alex' && p2 === 'iker') || (p1 === 'iker' && p2 === 'alex');
+        if(isAlexIker){
+          variants.push(
+            () => `🕹️ Que nadie se olvide del segundo enfrentamiento en Pokémon X, cuando Alex le metió una auténtica manita a Iker sin despeinarse. Con eso en la memoria llega este primer cruce en Alola, y el primer asalto se lo lleva <strong>${W}</strong>.`,
+            () => `🕹️ En Kalos hubo un segundo combate que Iker preferiría no recordar: Alex le pasó por encima sin piedad. Rivalidad marcada a fuego, capítulo nuevo en Alola — y el primer asalto cae del lado de <strong>${W}</strong>.`,
+            () => `🕹️ Iker sabe perfectamente de lo que hablamos: aquella paliza de Alex en el segundo duelo de Pokémon X todavía escuece. Ahora, en Alola, arranca otro capítulo — y el primero se lo apunta <strong>${W}</strong>.`,
+            () => `🏖️ Iker y Alex se conocen de sobra — al fin y al cabo, son los dos que se quedaron sujetando el Triolocke cuando Joel se largó de vacaciones a mitad de partida y los dejó tirados. Curtidos por esa experiencia, se enfrentan ahora en Alola, y el primer asalto es para <strong>${W}</strong>.`,
+            () => `🏖️ Mientras Joel andaba de vacaciones dejando el Triolocke a medias, Iker y Alex fueron quienes sostuvieron el barco. Esa complicidad forzosa no impide que aquí se jueguen el primer asalto a muerte — y se lo lleva <strong>${W}</strong>.`,
+            () => `🏖️ Compañeros de fatigas desde que Joel decidió que unas vacaciones importaban más que el Triolocke, Iker y Alex vuelven a verse las caras — esta vez en Alola, y sin nadie que se escaquee. El primer asalto lo gana <strong>${W}</strong>.`
+          );
+        }
         return pickNarrationVariant('g1_pokemonx', variants)();
       }
       const ss = getSoulSilverRecord(p1, p2);

@@ -1771,6 +1771,80 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .table-result.push{ color: var(--neon-yellow); background: rgba(255,225,79,0.12); box-shadow: 0 0 18px rgba(255,225,79,0.2), inset 0 0 0 1px rgba(255,225,79,0.3); }
 @keyframes resultPop{ 0%{ transform: scale(.85); opacity:0; } 100%{ transform: scale(1); opacity:1; } }
 
+.result-banner{
+  text-align:center; font-family:'Rajdhani',sans-serif; font-weight:800; letter-spacing:1px;
+  font-size: 16px; padding: 10px; border-radius: 12px; margin: 14px 0 2px; position:relative; z-index:1;
+  animation: resultPop .35s cubic-bezier(.2,.85,.3,1);
+}
+.result-banner.win{ color: var(--neon-green); background: rgba(77,255,176,0.12); box-shadow: 0 0 18px rgba(77,255,176,0.25), inset 0 0 0 1px rgba(77,255,176,0.35); }
+.result-banner.lose{ color: var(--danger); background: rgba(224,67,95,0.12); box-shadow: 0 0 18px rgba(224,67,95,0.2), inset 0 0 0 1px rgba(224,67,95,0.3); }
+
+.current-bet-row{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.current-bet-amount{ font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--gold); font-weight:700; }
+.chip-add-btn, .chip-clear-btn{
+  font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.5px; font-size:12px;
+  padding:7px 14px; border-radius:8px; cursor:pointer; border:1px solid var(--border);
+  background: var(--panel-2); color: var(--silver-bright);
+}
+.chip-add-btn{ border-color: var(--gold); color: var(--gold); }
+.chip-add-btn:hover{ background: rgba(255,225,79,0.12); }
+.chip-clear-btn:hover{ background: rgba(224,67,95,0.12); border-color: var(--danger); color: var(--danger); }
+
+/* ===== MINES ===== */
+.mines-count-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.mines-count-label{ font-family:'Rajdhani',sans-serif; font-size:12px; color:var(--silver-dim); letter-spacing:.5px; }
+.mines-status-row{
+  display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin:10px 0 16px;
+  font-family:'Rajdhani',sans-serif; font-size:13px; color:var(--silver-bright);
+}
+.mines-status-row b{ color: var(--gold); }
+.mines-grid{
+  display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; max-width:340px; margin:0 auto;
+}
+.mines-cell{
+  aspect-ratio:1; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:20px; cursor:pointer; user-select:none;
+  border:1px solid var(--border); background: linear-gradient(160deg, var(--panel-2), #14100a);
+  transition: transform .15s ease, background .2s ease;
+}
+.mines-cell.hidden:hover{ transform: translateY(-2px) scale(1.04); background: linear-gradient(160deg, #2a2216, #1a140b); }
+.mines-cell.safe{ background: rgba(77,255,176,0.14); border-color: var(--neon-green); cursor:default; animation: resultPop .3s ease; }
+.mines-cell.mine{ background: rgba(224,67,95,0.16); border-color: var(--danger); cursor:default; }
+.mines-cell.mine.hit{ animation: mineShake .4s ease; }
+@keyframes mineShake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+
+/* ===== CRASH ===== */
+.crash-display{
+  height:150px; border-radius:14px; margin-bottom:14px; display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(circle at 50% 120%, rgba(0,255,200,0.12), transparent 60%), linear-gradient(160deg, var(--panel-2), #100d09);
+  border:1px solid var(--border); position:relative; overflow:hidden;
+}
+.crash-display.running{ border-color: var(--neon-cyan); }
+.crash-display.crashed{ border-color: var(--danger); background: radial-gradient(circle at 50% 120%, rgba(224,67,95,0.18), transparent 60%), linear-gradient(160deg, var(--panel-2), #100d09); }
+.crash-multiplier{
+  font-family:'JetBrains Mono',monospace; font-size:44px; font-weight:800; color: var(--neon-cyan);
+  text-shadow: 0 0 20px rgba(0,255,220,0.5);
+}
+.crash-display.crashed .crash-multiplier{ color: var(--danger); text-shadow: 0 0 20px rgba(224,67,95,0.5); }
+
+/* ===== PLINKO ===== */
+.plinko-board{ position:relative; padding:14px 0 4px; }
+.plinko-row{ display:flex; justify-content:center; gap:22px; margin-bottom:16px; }
+.plinko-peg{ width:6px; height:6px; border-radius:50%; background: var(--silver-dim); box-shadow: 0 0 4px rgba(255,255,255,0.3); }
+.plinko-buckets{ display:flex; justify-content:center; gap:3px; margin-top:6px; }
+.plinko-bucket{
+  flex:1; max-width:38px; text-align:center; padding:6px 2px; border-radius:6px; font-size:10px;
+  font-family:'JetBrains Mono',monospace; font-weight:700; border:1px solid var(--border);
+}
+.plinko-bucket.hi{ background: rgba(255,90,90,0.18); border-color:#ff5a5a; color:#ff9a9a; }
+.plinko-bucket.mid{ background: rgba(255,225,79,0.14); border-color: var(--neon-yellow); color: var(--neon-yellow); }
+.plinko-bucket.lo{ background: rgba(120,120,120,0.12); color: var(--silver-dim); }
+.plinko-chip{
+  position:absolute; top:14px; left:50%; width:14px; height:14px; border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--neon-pink)); box-shadow: 0 0 8px var(--neon-pink);
+  transform: translateX(-50%); z-index:5;
+}
+
 .bj-action-row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 10px; position:relative; z-index:1; }
 .bj-action-row button{ min-width: 96px; }
 
@@ -1805,6 +1879,15 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .hall-card.g-nueve .hall-card-border{ background-image: linear-gradient(120deg, var(--gold), var(--neon-pink), var(--gold)); }
 .hall-card.g-nueve .hall-card-icon{ filter: drop-shadow(0 0 18px var(--gold)); }
 .hall-card.g-nueve .hall-card-bulbs .slot-bulb{ background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.hall-card.g-mines .hall-card-border{ background-image: linear-gradient(120deg, #ff5a5a, var(--neon-yellow), #ff5a5a); }
+.hall-card.g-mines .hall-card-icon{ filter: drop-shadow(0 0 18px #ff5a5a); }
+.hall-card.g-mines .hall-card-bulbs .slot-bulb{ background: #ff5a5a; box-shadow: 0 0 6px #ff5a5a; }
+.hall-card.g-crash .hall-card-border{ background-image: linear-gradient(120deg, var(--neon-cyan), #ff5a5a, var(--neon-cyan)); }
+.hall-card.g-crash .hall-card-icon{ filter: drop-shadow(0 0 18px var(--neon-cyan)); }
+.hall-card.g-crash .hall-card-bulbs .slot-bulb{ background: var(--neon-cyan); box-shadow: 0 0 6px var(--neon-cyan); }
+.hall-card.g-plinko .hall-card-border{ background-image: linear-gradient(120deg, var(--neon-pink), var(--neon-cyan), var(--neon-yellow)); }
+.hall-card.g-plinko .hall-card-icon{ filter: drop-shadow(0 0 18px var(--neon-pink)); }
+.hall-card.g-plinko .hall-card-bulbs .slot-bulb{ background: var(--neon-pink); box-shadow: 0 0 6px var(--neon-pink); }
 
 /* Lotería */
 .loteria-wrap{ display:flex; flex-direction:column; align-items:center; gap: 22px; }
@@ -2543,6 +2626,48 @@ function nineHandValue(cards){
 }
 const BJ_CHIP_VALUES = [1, 5, 10, 25, 50];
 let bjChipValue = 5;
+
+// ===== MINES =====
+const MINES_GRID_SIZE = 25; // 5x5
+const MINES_CHIP_VALUES = [1, 5, 10, 25, 50];
+let minesChipValue = 5;
+let minesBetAmount = 0;
+let minesCount = 5;
+let minesState = { phase:'bet', grid:[], revealed:[], resultText:'', resultClass:'' };
+function minesMultiplier(mineCount, safeRevealed){
+  // formula estandar de casino tipo "mines": producto de probabilidades
+  // inversas de no pillar una mina en cada paso, con un 3% de margen de casa
+  let mult = 1;
+  const total = MINES_GRID_SIZE;
+  for(let i=0;i<safeRevealed;i++){
+    const safeLeft = (total - i) - mineCount;
+    const cellsLeft = total - i;
+    mult *= cellsLeft / safeLeft;
+  }
+  return mult * 0.97;
+}
+
+// ===== CRASH =====
+const CRASH_CHIP_VALUES = [1, 5, 10, 25, 50];
+let crashChipValue = 5;
+let crashBetAmount = 0;
+let crashState = { phase:'bet', multiplier:1.00, crashPoint:1.00, cashedOutAt:null, resultText:'', resultClass:'' };
+let crashInterval = null;
+function crashRollPoint(){
+  // distribucion tipo casino: la mayoria de rondas revientan pronto, alguna
+  // rara vez llega muy alto. 3% de margen de casa (idem que el resto de juegos).
+  const r = Math.random();
+  const point = Math.max(1.00, (0.97 / (1 - r)) );
+  return Math.min(point, 100); // tope de seguridad
+}
+
+// ===== PLINKO =====
+const PLINKO_CHIP_VALUES = [1, 5, 10, 25, 50];
+let plinkoChipValue = 5;
+const PLINKO_ROWS = 10;
+const PLINKO_MULTS = [8.5, 3, 1.5, 1.1, 0.5, 0.3, 0.5, 1.1, 1.5, 3, 8.5]; // 11 casillas (rows+1)
+let plinkoDropping = false;
+let plinkoLastResult = null; // {bucket, mult, payout}
 let bjBetAmount = 0;
 let bjState = { phase:'bet', playerCards:[], dealerCards:[], hideDealer:true, resultText:'', resultClass:'' };
 let bjDealing = false; // true mientras hay cartas repartiéndose / crupier jugando, para pausar el refresco
@@ -4054,6 +4179,36 @@ function renderCasinoFloor(){
             </div>
           </div>
         </div>
+        <div class="hall-card g-mines" onclick="openCasinoZone('mines')">
+          <div class="hall-card-border">
+            <div class="hall-card-inner">
+              <div class="hall-card-icon">💣</div>
+              <div class="hall-card-title">Mines</div>
+              <div class="hall-card-sub">Casillas seguras · retírate cuando quieras</div>
+              <div class="hall-card-bulbs">${Array.from({length:5}).map(()=>`<div class="slot-bulb"></div>`).join('')}</div>
+            </div>
+          </div>
+        </div>
+        <div class="hall-card g-crash" onclick="openCasinoZone('crash')">
+          <div class="hall-card-border">
+            <div class="hall-card-inner">
+              <div class="hall-card-icon">🚀</div>
+              <div class="hall-card-title">Crash</div>
+              <div class="hall-card-sub">El multiplicador sube... hasta que explota</div>
+              <div class="hall-card-bulbs">${Array.from({length:5}).map(()=>`<div class="slot-bulb"></div>`).join('')}</div>
+            </div>
+          </div>
+        </div>
+        <div class="hall-card g-plinko" onclick="openCasinoZone('plinko')">
+          <div class="hall-card-border">
+            <div class="hall-card-inner">
+              <div class="hall-card-icon">🔴</div>
+              <div class="hall-card-title">Plinko</div>
+              <div class="hall-card-sub">Suelta la ficha y que caiga donde quiera</div>
+              <div class="hall-card-bulbs">${Array.from({length:5}).map(()=>`<div class="slot-bulb"></div>`).join('')}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="casino-floor-hint">Elige una zona para entrar</div>
@@ -4071,6 +4226,9 @@ function openCasinoZone(tab){
   else if(tab==='blackjack'){ casinoModeLine = pickLine(BLACKJACK_LINES); bjState = { phase:'bet', playerCards:[], dealerCards:[], hideDealer:true, resultText:'', resultClass:'' }; }
   else if(tab==='nueve'){ casinoModeLine = pickLine(NINE_LINES); nineState = { phase:'bet', playerCards:[], bankerCards:[], choice:null, resultText:'', resultClass:'' }; }
   else if(tab==='eggwheel'){ eggWheelResult = null; }
+  else if(tab==='mines'){ minesState = { phase:'bet', grid:[], revealed:[], resultText:'', resultClass:'' }; }
+  else if(tab==='crash'){ crashState = { phase:'bet', multiplier:1.00, crashPoint:1.00, cashedOutAt:null, resultText:'', resultClass:'' }; if(crashInterval){ clearInterval(crashInterval); crashInterval=null; } }
+  else if(tab==='plinko'){ plinkoDropping = false; plinkoLastResult = null; }
   render();
 }
 
@@ -4131,7 +4289,7 @@ function renderCasino(app){
       </div>
 
       <div id="casino-content">
-        ${casinoTab==='slots' ? renderSlotsTab() : casinoTab==='roulette' ? renderRouletteTab() : casinoTab==='blackjack' ? renderBlackjackTab() : casinoTab==='nueve' ? renderNineTab() : casinoTab==='eggwheel' ? renderEggWheelTab() : renderLoteriaTab()}
+        ${casinoTab==='slots' ? renderSlotsTab() : casinoTab==='roulette' ? renderRouletteTab() : casinoTab==='blackjack' ? renderBlackjackTab() : casinoTab==='nueve' ? renderNineTab() : casinoTab==='eggwheel' ? renderEggWheelTab() : casinoTab==='mines' ? renderMinesTab() : casinoTab==='crash' ? renderCrashTab() : casinoTab==='plinko' ? renderPlinkoTab() : renderLoteriaTab()}
       </div>
     `;
   }
@@ -5091,6 +5249,286 @@ async function nineBet(choice){
   nineState.phase = 'result';
   nineDealing = false;
   render();
+}
+
+// ================= MINES =================
+function setMinesChip(v){ minesChipValue = v; render(); }
+function minesAddChip(){
+  minesBetAmount = (minesBetAmount||0) + minesChipValue;
+  render();
+}
+function minesClearBet(){ minesBetAmount = 0; render(); }
+function setMinesCount(n){ minesCount = n; render(); }
+
+async function minesStartRound(){
+  const bet = minesBetAmount||0;
+  if(bet <= 0){ toast('Elige una apuesta primero.'); return; }
+  if((tickets[casinoPlayer]||0) < bet){ toast('No tienes suficientes tickets.'); return; }
+  await addTickets(casinoPlayer, -bet, `Apuesta en Mines (${minesCount} minas)`);
+  const grid = Array(MINES_GRID_SIZE).fill(false);
+  const mineIdxs = new Set();
+  while(mineIdxs.size < minesCount) mineIdxs.add(Math.floor(Math.random()*MINES_GRID_SIZE));
+  mineIdxs.forEach(i=>grid[i]=true);
+  minesState = { phase:'playing', grid, revealed: Array(MINES_GRID_SIZE).fill(false), resultText:'', resultClass:'' };
+  playSound('spin');
+  render();
+}
+
+async function minesReveal(idx){
+  if(minesState.phase !== 'playing') return;
+  if(minesState.revealed[idx]) return;
+  minesState.revealed[idx] = true;
+  if(minesState.grid[idx]){
+    minesState.phase = 'result';
+    minesState.resultText = `💥 ¡Mina! Pierdes los ${minesBetAmount} tickets apostados.`;
+    minesState.resultClass = 'lose';
+    playSound('lose');
+    render();
+    return;
+  }
+  playSound('cardFlip');
+  const safeRevealed = minesState.revealed.filter((r,i)=>r && !minesState.grid[i]).length;
+  const totalSafe = MINES_GRID_SIZE - minesCount;
+  if(safeRevealed >= totalSafe){
+    await minesCashOut(); // has destapado todas las casillas seguras posibles
+    return;
+  }
+  render();
+}
+
+async function minesCashOut(){
+  if(minesState.phase !== 'playing') return;
+  const safeRevealed = minesState.revealed.filter((r,i)=>r && !minesState.grid[i]).length;
+  if(safeRevealed === 0){ toast('Destapa al menos una casilla antes de retirarte.'); return; }
+  const mult = minesMultiplier(minesCount, safeRevealed);
+  const payout = Math.round(minesBetAmount * mult);
+  minesState.phase = 'result';
+  minesState.resultText = `Te retiras con x${mult.toFixed(2)} → ¡ganas ${payout} tickets! ${pickLine(WIN_REACTIONS)}`;
+  minesState.resultClass = 'win';
+  playSound(payout >= minesBetAmount*3 ? 'bigwin' : 'win');
+  if(payout >= minesBetAmount*3) fireConfetti({ count: 120 });
+  await addTickets(casinoPlayer, payout, `Retirada en Mines (x${mult.toFixed(2)})`);
+  render();
+}
+
+function minesNewRound(){
+  minesState = { phase:'bet', grid:[], revealed:[], resultText:'', resultClass:'' };
+  render();
+}
+
+function renderMinesTab(){
+  const balance = tickets[casinoPlayer]||0;
+  if(minesState.phase === 'bet'){
+    return `
+      <div class="casino-mode-line">${casinoModeLine}</div>
+      <div class="mines-count-row">
+        <div class="mines-count-label">Nº de minas:</div>
+        ${[3,5,8,12].map(n=>`<div class="chip-denom ${n===minesCount?'active':''}" onclick="setMinesCount(${n})"><span>${n}</span></div>`).join('')}
+      </div>
+      <div class="bet-panel" style="max-width:420px;">
+        <div class="bet-panel-header">Fichas de ${NAMES[casinoPlayer]} · 🎟️ ${balance}</div>
+        <div class="chip-selector">
+          ${MINES_CHIP_VALUES.map(v=>`<div class="chip-denom ${v===minesChipValue?'active':''}" onclick="setMinesChip(${v})"><span>${v}</span></div>`).join('')}
+        </div>
+        <div class="current-bet-row">
+          <div class="current-bet-amount">Apuesta: 🎟️ ${minesBetAmount||0}</div>
+          <button class="chip-add-btn" onclick="minesAddChip()">+ Añadir ficha</button>
+          <button class="chip-clear-btn" onclick="minesClearBet()">Vaciar</button>
+        </div>
+        <button class="primary" style="width:100%;margin-top:10px;" onclick="minesStartRound()">💣 Jugar</button>
+      </div>
+    `;
+  }
+  const revealedSafe = minesState.revealed.filter((r,i)=>r && !minesState.grid[i]).length;
+  const mult = minesMultiplier(minesCount, Math.max(revealedSafe,0));
+  const potential = Math.round(minesBetAmount * (revealedSafe>0 ? mult : 1));
+  return `
+    <div class="casino-mode-line">${casinoModeLine}</div>
+    <div class="mines-status-row">
+      <div>Apuesta: 🎟️ ${minesBetAmount}</div>
+      <div>Multiplicador: <b>x${(revealedSafe>0?mult:1).toFixed(2)}</b></div>
+      <div>Si te retiras ahora: <b>🎟️ ${revealedSafe>0?potential:0}</b></div>
+    </div>
+    <div class="mines-grid">
+      ${minesState.grid.map((isMine,i)=>{
+        const rev = minesState.revealed[i];
+        const showMine = minesState.phase==='result' && isMine;
+        let cls = 'mines-cell';
+        let content = '';
+        if(rev && isMine){ cls+=' mine hit'; content='💣'; }
+        else if(rev && !isMine){ cls+=' safe'; content='💎'; }
+        else if(showMine){ cls+=' mine'; content='💣'; }
+        else { cls+=' hidden'; content=''; }
+        return `<div class="${cls}" ${minesState.phase==='playing' && !rev ? `onclick="minesReveal(${i})"` : ''}>${content}</div>`;
+      }).join('')}
+    </div>
+    ${minesState.phase==='playing' ? `<button class="primary" style="width:100%;margin-top:12px;" onclick="minesCashOut()">💰 Retirarme con lo ganado</button>` : ''}
+    ${minesState.resultText ? `<div class="result-banner ${minesState.resultClass}">${minesState.resultText}</div>` : ''}
+    ${minesState.phase==='result' ? `<button class="primary" style="width:100%;margin-top:10px;" onclick="minesNewRound()">Jugar otra ronda</button>` : ''}
+  `;
+}
+
+// ================= CRASH =================
+function setCrashChip(v){ crashChipValue = v; render(); }
+function crashAddChip(){ crashBetAmount = (crashBetAmount||0) + crashChipValue; render(); }
+function crashClearBet(){ crashBetAmount = 0; render(); }
+
+async function crashStartRound(){
+  const bet = crashBetAmount||0;
+  if(bet <= 0){ toast('Elige una apuesta primero.'); return; }
+  if((tickets[casinoPlayer]||0) < bet){ toast('No tienes suficientes tickets.'); return; }
+  await addTickets(casinoPlayer, -bet, 'Apuesta en Crash');
+  const crashPoint = crashRollPoint();
+  crashState = { phase:'running', multiplier:1.00, crashPoint, cashedOutAt:null, resultText:'', resultClass:'' };
+  render();
+  playSound('spin');
+  const startTime = Date.now();
+  crashInterval = setInterval(()=>{
+    const elapsed = (Date.now()-startTime)/1000;
+    // curva exponencial suave, tarda unos segundos en pillar velocidad
+    const mult = Math.pow(Math.E, elapsed*0.18);
+    crashState.multiplier = mult;
+    if(mult >= crashState.crashPoint){
+      clearInterval(crashInterval); crashInterval = null;
+      crashState.multiplier = crashState.crashPoint;
+      crashState.phase = 'crashed';
+      if(crashState.cashedOutAt === null){
+        crashState.resultText = `💥 ¡Explotó en x${crashState.crashPoint.toFixed(2)}! Pierdes los ${crashBetAmount} tickets.`;
+        crashState.resultClass = 'lose';
+        playSound('lose');
+      }
+      render();
+      return;
+    }
+    render();
+  }, 80);
+}
+
+async function crashCashOut(){
+  if(crashState.phase !== 'running') return;
+  if(crashInterval){ /* la ronda sigue corriendo visualmente hasta que explote, pero ya has cobrado */ }
+  const mult = crashState.multiplier;
+  const payout = Math.round(crashBetAmount * mult);
+  crashState.cashedOutAt = mult;
+  crashState.resultText = `Te retiras en x${mult.toFixed(2)} → ¡ganas ${payout} tickets! ${pickLine(WIN_REACTIONS)}`;
+  crashState.resultClass = 'win';
+  playSound(payout >= crashBetAmount*3 ? 'bigwin' : 'win');
+  if(payout >= crashBetAmount*3) fireConfetti({ count: 120 });
+  await addTickets(casinoPlayer, payout, `Retirada en Crash (x${mult.toFixed(2)})`);
+  render();
+}
+
+function crashNewRound(){
+  if(crashInterval){ clearInterval(crashInterval); crashInterval = null; }
+  crashState = { phase:'bet', multiplier:1.00, crashPoint:1.00, cashedOutAt:null, resultText:'', resultClass:'' };
+  render();
+}
+
+function renderCrashTab(){
+  const balance = tickets[casinoPlayer]||0;
+  if(crashState.phase === 'bet'){
+    return `
+      <div class="casino-mode-line">${casinoModeLine}</div>
+      <div class="bet-panel" style="max-width:420px;">
+        <div class="bet-panel-header">Fichas de ${NAMES[casinoPlayer]} · 🎟️ ${balance}</div>
+        <div class="chip-selector">
+          ${CRASH_CHIP_VALUES.map(v=>`<div class="chip-denom ${v===crashChipValue?'active':''}" onclick="setCrashChip(${v})"><span>${v}</span></div>`).join('')}
+        </div>
+        <div class="current-bet-row">
+          <div class="current-bet-amount">Apuesta: 🎟️ ${crashBetAmount||0}</div>
+          <button class="chip-add-btn" onclick="crashAddChip()">+ Añadir ficha</button>
+          <button class="chip-clear-btn" onclick="crashClearBet()">Vaciar</button>
+        </div>
+        <button class="primary" style="width:100%;margin-top:10px;" onclick="crashStartRound()">🚀 Despegar</button>
+      </div>
+    `;
+  }
+  const crashed = crashState.phase === 'crashed';
+  return `
+    <div class="casino-mode-line">${casinoModeLine}</div>
+    <div class="crash-display ${crashed ? 'crashed' : 'running'}">
+      <div class="crash-multiplier">${crashed && crashState.cashedOutAt===null ? '💥' : ''} x${crashState.multiplier.toFixed(2)}</div>
+    </div>
+    <div class="mines-status-row">
+      <div>Apuesta: 🎟️ ${crashBetAmount}</div>
+      <div>Si te retiras ahora: <b>🎟️ ${Math.round(crashBetAmount*crashState.multiplier)}</b></div>
+    </div>
+    ${crashState.phase==='running' ? `<button class="primary" style="width:100%;margin-top:12px;" onclick="crashCashOut()">💰 Retirarme YA</button>` : ''}
+    ${crashState.resultText ? `<div class="result-banner ${crashState.resultClass}">${crashState.resultText}</div>` : ''}
+    ${crashed ? `<button class="primary" style="width:100%;margin-top:10px;" onclick="crashNewRound()">Jugar otra ronda</button>` : ''}
+  `;
+}
+
+// ================= PLINKO =================
+function setPlinkoChip(v){ plinkoChipValue = v; render(); }
+
+async function plinkoDrop(){
+  const bet = plinkoChipValue;
+  if((tickets[casinoPlayer]||0) < bet){ toast('No tienes suficientes tickets.'); return; }
+  if(plinkoDropping) return;
+  plinkoDropping = true;
+  plinkoLastResult = null;
+  await addTickets(casinoPlayer, -bet, 'Ficha en Plinko');
+  render();
+  playSound('spin');
+  // camino aleatorio: en cada fila, 50/50 izquierda o derecha
+  let bucket = 0;
+  for(let i=0;i<PLINKO_ROWS;i++){
+    if(Math.random() < 0.5) bucket++;
+  }
+  const nBuckets = PLINKO_MULTS.length;
+  const targetLeftPct = ((bucket + 0.5) / nBuckets) * 100;
+  const fallMs = PLINKO_ROWS * 160;
+
+  const el = document.getElementById('plinko-chip');
+  if(el){
+    el.style.transition = 'none';
+    el.style.left = '50%';
+    el.style.top = '14px';
+    void el.offsetWidth; // forzar reflow para que el "none" se aplique antes de animar
+    el.style.transition = `left ${fallMs}ms cubic-bezier(.3,.1,.4,1), top ${fallMs}ms linear`;
+    el.style.left = targetLeftPct + '%';
+    el.style.top = 'calc(100% - 20px)';
+  }
+
+  setTimeout(async ()=>{
+    const mult = PLINKO_MULTS[bucket];
+    const payout = Math.round(bet * mult);
+    plinkoDropping = false;
+    plinkoLastResult = { bucket, mult, payout };
+    if(payout > 0){
+      playSound(payout >= bet*3 ? 'bigwin' : (payout>=bet ? 'win' : 'lose'));
+      if(payout >= bet*3) fireConfetti({ count: 100 });
+      await addTickets(casinoPlayer, payout, `Plinko (x${mult})`);
+    } else {
+      playSound('lose');
+    }
+    render();
+  }, fallMs + 150);
+}
+
+function renderPlinkoTab(){
+  const balance = tickets[casinoPlayer]||0;
+  return `
+    <div class="casino-mode-line">${casinoModeLine}</div>
+    <div class="plinko-board" style="--plinko-rows:${PLINKO_ROWS};">
+      ${Array.from({length:PLINKO_ROWS}).map((_,row)=>`
+        <div class="plinko-row">${Array.from({length:row+2}).map(()=>`<div class="plinko-peg"></div>`).join('')}</div>
+      `).join('')}
+      <div class="plinko-buckets">
+        ${PLINKO_MULTS.map(m=>`<div class="plinko-bucket ${m>=3?'hi':m>=1?'mid':'lo'}">x${m}</div>`).join('')}
+      </div>
+      ${plinkoDropping ? `<div id="plinko-chip" class="plinko-chip"></div>` : ''}
+    </div>
+    <div class="bet-panel" style="max-width:420px;">
+      <div class="bet-panel-header">Fichas de ${NAMES[casinoPlayer]} · 🎟️ ${balance}</div>
+      <div class="chip-selector">
+        ${PLINKO_CHIP_VALUES.map(v=>`<div class="chip-denom ${v===plinkoChipValue?'active':''}" onclick="setPlinkoChip(${v})"><span>${v}</span></div>`).join('')}
+      </div>
+      <button class="primary" style="width:100%;margin-top:10px;" ${plinkoDropping?'disabled':''} onclick="plinkoDrop()">🔴 Soltar ficha (${plinkoChipValue} tickets)</button>
+    </div>
+    ${plinkoLastResult ? `<div class="result-banner ${plinkoLastResult.payout>=plinkoChipValue?'win':'lose'}">Cae en x${plinkoLastResult.mult} → ${plinkoLastResult.payout>0?'ganas':'te quedas con'} ${plinkoLastResult.payout} tickets</div>` : ''}
+  `;
 }
 
 function renderLoteriaTab(){

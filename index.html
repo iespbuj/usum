@@ -2275,7 +2275,8 @@ const MATCH1_LOSER_WHEEL = [
 let hearts = {}, teams = {}, history = [], tradesActive = [], tradesHistory = [];
 let tickets = {}, pendingPrizes = {};
 let dailyBonusDate = {}; // último día (YYYY-MM-DD) en que cada entrenador reclamó su bonus diario
-let money = {}, stamps = {}; // stamps: sellos del pasaporte (bitmask de 15 bits), sincronizados automáticamente por vidas_watcher_usum.py desde el save -- de aquí sale el level cap, sin marcar nada a mano
+let money = {}, stamps = {}; // stamps: sellos del pasaporte (bitmask de 15 bits), sincronizados automáticamente por vidas_watcher_usum.py desde el save -- de aquí sale el level cap de Kahunas, sin marcar nada a mano
+let captainTrialsCleared = {}; // idem: nº de pruebas de Capitán superadas (WK_OTHER_SHIREN_CLEAR), de aquí sale el level cap de pruebas de Capitán
 let locationName = {}; // idem: ubicacion actual en el juego (zona/mapa)
 let collections = {}; // idem: coleccion completa (equipo+cajas) por entrenador, para poder ver/ofertar cualquier Pokémon
 let graveyard = {}; // idem: cementerio (Pokémon caídos) por entrenador
@@ -2306,19 +2307,33 @@ const MILESTONE_TABLE = [
   { icon: '👑', label: 'Campeón/Hau',                   cap: 60 },
 ];
 // A qué sello automático (índice dentro de stampsOf(), 0-4: Melemele, Akala,
-// Ula'ula, Poni, Reto Insular completo) pertenece cada hito de la tabla de
-// arriba -- el save SOLO nos da el sello de "isla entera superada", no cada
-// prueba/kahuna suelta, así que agrupamos por isla: en cuanto el juego marca
-// esa isla como superada, todos los hitos de esa isla se dan por hechos.
-// Esto es automático al 100% (cero clics) aunque algo menos fino que la
-// lista original; si en algún momento localizamos las flags de EventWork de
-// cada prueba/kahuna suelta (jugando y mandándome saves de antes/después de
-// cada una, igual que hicimos con equipo/dinero/sellos) se puede afinar cada
-// hito por separado sin tocar nada de esto -- solo esta tabla.
+// Ula'ula, Poni, Reto Insular completo) pertenece cada hito de Kahuna/cierre
+// de isla -- confirmado que el sello SOLO sube al ganar al Kahuna de esa isla
+// (no antes, aunque ya se hayan hecho las pruebas de Capitán), así que para
+// estos hitos concretos el sello es la señal correcta tal cual.
 const MILESTONE_GROUP_END = [3, 7, 10, 13, 16]; // hito con indice < este valor -> pertenece a este grupo (0-4)
 function milestoneGroupOf(i){
   return MILESTONE_GROUP_END.findIndex(end => i < end);
 }
+// Hitos de PRUEBA DE CAPITÁN: no usan el sello de isla (demasiado grueso,
+// solo sube al ganar al Kahuna), usan WK_OTHER_SHIREN_CLEAR directamente
+// (contador de pruebas de Capitán superadas), confirmado jugando de verdad
+// dos veces seguidas (Lulú: 1->2, Kiawe: 2->3). Índice del hito en
+// MILESTONE_TABLE -> valor mínimo de captainTrialsCleared necesario.
+// Kommo-o (10) y Mina (11) van con el mismo valor (7) porque el combate de
+// Kommo-o forma parte del mismo trámite que la prueba de Mina y no tenemos
+// aún confirmación de si suman al contador por separado -- si al llegar ahí
+// vemos que sube dos veces, se separan en dos valores (7 y 8) sin más.
+const CAPTAIN_TRIAL_MILESTONE_COUNT = {
+  1: 1,  // Prueba de Ilima
+  3: 2,  // Prueba de Lana (Lulú)
+  4: 3,  // Prueba de Kiawe
+  5: 4,  // Prueba de Mallow
+  7: 5,  // Prueba de Sophocles
+  8: 6,  // Prueba de Acerola
+  10: 7, // Prueba de Kommo-o (por confirmar)
+  11: 7, // Prueba de Mina
+};
 const DEFAULT_NORMAS = [
   'Cualquier Pokémon debilitado debe ser liberado.',
   'Solo se podrá capturar el primer Pokémon salvaje de cada ruta o zona.',
@@ -2805,6 +2820,7 @@ async function loadAll(){
     dailyBonusDate[t] = profileResults[i].dailyBonusDate || null;
     money[t] = profileResults[i].money || 0;
     stamps[t] = profileResults[i].stamps || 0;
+    captainTrialsCleared[t] = profileResults[i].captainTrialsCleared || 0;
     locationName[t] = profileResults[i].locationName || null;
   });
   if(!saveInFlight['history']) history = historyResult;
@@ -2842,7 +2858,7 @@ async function loadAll(){
   return changed;
 }
 async function saveProfile(t){
-  return await trackedStoreSet('profile:'+t, 'us:profile:'+t, { hearts: hearts[t], team: teams[t], tickets: tickets[t]||0, pendingPrizes: pendingPrizes[t]||[], dailyBonusDate: dailyBonusDate[t]||null, money: money[t]||0, stamps: stamps[t]||0, locationName: locationName[t]||null });
+  return await trackedStoreSet('profile:'+t, 'us:profile:'+t, { hearts: hearts[t], team: teams[t], tickets: tickets[t]||0, pendingPrizes: pendingPrizes[t]||[], dailyBonusDate: dailyBonusDate[t]||null, money: money[t]||0, stamps: stamps[t]||0, captainTrialsCleared: captainTrialsCleared[t]||0, locationName: locationName[t]||null });
 }
 
 
@@ -3303,7 +3319,13 @@ async function addTickets(t, amount, reason){
   const sign = amount >= 0 ? '+' : '';
   pushHistory(`🎟️ ${NAMES[t]} ${sign}${amount} tickets (${reason}) → ${tickets[t]} tickets en total`);
   const ok = await saveProfile(t);
-  if(!ok) queueRetry('profile:'+t, ()=>saveProfile(t));
+  if(!ok){
+    queueRetry('profile:'+t, ()=>saveProfile(t));
+    // Aviso visible YA (no solo el badge discreto de la esquina): si esto
+    // pasa justo tras ganar algo y cierras la pestaña antes de que el
+    // reintento en segundo plano acabe, ese premio se pierde de verdad.
+    toast(`⚠ No se ha podido guardar (${reason}). Reintentando solo... NO cierres la pestaña todavía.`);
+  }
 }
 
 async function addPendingPrize(t, text, source){
@@ -3426,7 +3448,13 @@ function stampsOf(t){
 }
 function milestonesOf(t){
   const st = stampsOf(t);
-  return MILESTONE_TABLE.map((_, i) => !!st[milestoneGroupOf(i)]);
+  const captainCount = captainTrialsCleared[t] || 0;
+  return MILESTONE_TABLE.map((_, i) => {
+    if (CAPTAIN_TRIAL_MILESTONE_COUNT.hasOwnProperty(i)) {
+      return captainCount >= CAPTAIN_TRIAL_MILESTONE_COUNT[i];
+    }
+    return !!st[milestoneGroupOf(i)];
+  });
 }
 function milestoneCountOf(t){
   return milestonesOf(t).filter(Boolean).length;

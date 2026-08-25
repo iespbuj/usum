@@ -109,6 +109,13 @@ nav{
 }
 .nav-btn:hover{ color: var(--silver-bright); border-color: var(--gold); }
 .nav-btn.active{ background: var(--panel-2); color: var(--silver-bright); border-color: var(--gold); box-shadow: 0 0 10px rgba(230,182,86,0.35), inset 0 0 8px rgba(230,182,86,0.12); }
+.nav-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:16px; height:16px; padding:0 4px; margin-left:5px; border-radius:9px;
+  background: var(--danger); color:#fff; font-size:10px; font-weight:800;
+  font-family:'JetBrains Mono',monospace; vertical-align:2px;
+  box-shadow: 0 0 6px rgba(224,67,95,0.6);
+}
 
 main{ max-width: 1000px; margin: 0 auto; padding: 20px; }
 
@@ -419,6 +426,28 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 }
 .history-item .h-text{ color: var(--silver); }
 .history-item .h-time{ color: var(--silver-dim); font-size:11px; white-space:nowrap; }
+.history-search{
+  display:block; max-width:640px; margin: 16px auto 0; width:100%;
+  background: var(--panel); border:1px solid var(--border); border-radius:10px;
+  padding:10px 14px; color: var(--silver-bright); font-family:'Rajdhani',sans-serif; font-size:14px;
+}
+.history-search:focus{ outline:none; border-color: var(--gold); }
+.history-search::placeholder{ color: var(--silver-dim); }
+.history-filter-row{
+  display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+  max-width:640px; margin: 10px auto 0;
+}
+.history-chip{
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; letter-spacing:.3px;
+  padding:6px 12px; border-radius:999px; cursor:pointer;
+  border:1px solid var(--border); background: var(--panel-2); color: var(--silver-dim);
+}
+.history-chip:hover{ color: var(--silver-bright); border-color: var(--gold); }
+.history-chip.active{ background: var(--gold); border-color: var(--gold); color:#1c140a; }
+.history-day-label{
+  max-width:640px; margin: 18px auto 6px; font-family:'Rajdhani',sans-serif; font-weight:800;
+  letter-spacing:1px; font-size:12px; color: var(--silver-dim); text-transform:uppercase;
+}
 .empty-state{ text-align:center; color: var(--silver-dim); margin-top: 40px; font-size:14px; }
 
 /* ---------- Normas ---------- */
@@ -1992,7 +2021,7 @@ footer{
   <div class="subtitle">Pokémon Ultra Sol · Iker · Joel · Alex</div>
   <nav>
     <button class="nav-btn" data-nav="home" onclick="go('home')">Inicio</button>
-    <button class="nav-btn" data-nav="history" onclick="go('history')">Historial</button>
+    <button class="nav-btn" data-nav="history" onclick="go('history')">Historial<span id="history-badge" class="nav-badge" style="display:none;"></span></button>
     <button class="nav-btn" data-nav="trade" onclick="go('trade')">Trade</button>
     <button class="nav-btn" data-nav="duel" onclick="go('duel')">Temporizador</button>
     <button class="nav-btn" data-nav="normas" onclick="go('normas')">Normas</button>
@@ -2366,7 +2395,7 @@ const WIN_REACTIONS = [
 const TRAINERS = ['iker','joel','alex'];
 const NAMES = { iker:'Iker', joel:'Joel', alex:'Alex' };
 
-const LOSER_PRIZES = ['1 captura extra', '1 Menta de Naturaleza', '5 tickets', '10 tickets', 'Banda Focus', 'Pesa Recia', 'Baya Meloc', 'Pierde 3 vidas', 'Pierde 1 vida', '1 Cápsula Habilidad', 'Nada'];
+const LOSER_PRIZES = ['1 captura extra', '1 Menta de Naturaleza', '5 tickets', '10 tickets', 'Banda Focus', 'Pesa Recia', 'Baya Meloc', 'Pierde 3 vidas', 'Pierde 1 vida', '1 Cápsula Habilidad', '1 Cápsula Habilidad', 'Nada'];
 const WINNER_PRIZES = ['2 capturas extra', 'Elegir entre 3 huevos', '2 Mentas de Naturaleza', '10 tickets', '20 tickets', 'Permiso para una ilegalidad', 'Cambiar un Pokémon por otro que quiera de otro equipo', '3 Cápsulas Habilidad'];
 const WHEEL_COLORS = ['#9fb2da','#c9a86a','#c9cfdd','#7d97c9','#e0c68a','#b8bfd1','#8fa8d6','#d18aa0'];
 
@@ -2709,7 +2738,7 @@ const CHALLENGE_COST = 25;
 const CHALLENGE_STAKES = [
   { id:'steal_pokemon', label:'Robar un Pokémon (a elegir)', needsMonPick:true },
   { id:'all_tickets',   label:'Llevarse todos los tickets del rival', needsMonPick:false },
-  { id:'steal_heart',   label:'Robar 1 vida', needsMonPick:false },
+  { id:'steal_heart',   label:'Robar 2 vidas', needsMonPick:false },
   { id:'capsules',      label:'5 Cápsulas Habilidad', needsMonPick:false },
   { id:'mints',         label:'5 Mentas de Naturaleza', needsMonPick:false },
   { id:'rename',        label:'Cambiar un apodo a un Pokémon del rival (a elegir)', needsMonPick:true },
@@ -3433,10 +3462,13 @@ function pushHistory(text){
    salir hasta que haya algo nuevo desde la ultima vez que se vio en ESTE
    dispositivo/navegador (se recuerda con localStorage, igual que el volumen). ---- */
 const NEWS_SEEN_KEY = 'triolocke_news_last_seen_ts';
-// Solo estas categorías cuentan como "novedad" para el popup: muertes (💔),
-// shinies (✨) y capturas nuevas (🆕). Todo lo demás (tickets, trades,
-// normas, casino...) se queda fuera aposta.
-const NEWS_RELEVANT_PREFIXES = ['💔', '✨', '🆕'];
+// Categorías que cuentan como "novedad" para el popup y para el aviso del
+// nav: muertes (💔), shinies (✨), capturas nuevas (🆕), intercambios (🔄),
+// evoluciones (🔺), lotería (🎉) y hitos de nivel cap superados (🏆).
+// Deliberadamente fuera: tickets sueltos, apuestas de casino, normas,
+// pagos de habilidad -- eso es ruido de fondo, no algo que apetezca leer
+// en un aviso.
+const NEWS_RELEVANT_PREFIXES = ['💔', '✨', '🆕', '🔄', '🔺', '🎉', '🏆'];
 function isNewsRelevant(text){
   return NEWS_RELEVANT_PREFIXES.some(p => text.startsWith(p));
 }
@@ -3567,13 +3599,30 @@ function go(v, param){
     casinoFloor = true;
     casinoGreetingLine = CROUPIER_LINES[Math.floor(Math.random()*CROUPIER_LINES.length)];
   }
+  if(v === 'history'){
+    // entrar en Historial (que por defecto abre la pestaña Novedades) cuenta
+    // como "leído": se marca el momento y el aviso del nav se apaga.
+    localStorage.setItem(NEWS_SEEN_KEY, String(Date.now()));
+  }
   render();
+}
+
+function unreadNewsCount(){
+  const lastSeen = parseInt(localStorage.getItem(NEWS_SEEN_KEY) || '0', 10);
+  if(!lastSeen) return 0;
+  return history.filter(h => h.ts > lastSeen && isNewsRelevant(h.text)).length;
 }
 
 function setActiveNav(){
   document.querySelectorAll('.nav-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.nav === (view==='profile' ? '' : view));
   });
+  const badge = document.getElementById('history-badge');
+  if(badge){
+    const n = unreadNewsCount();
+    badge.textContent = n > 9 ? '9+' : String(n);
+    badge.style.display = n > 0 ? 'inline-flex' : 'none';
+  }
 }
 
 /* ---------------- RENDER ---------------- */
@@ -3926,8 +3975,79 @@ function renderProfile(app, t){
   `;
 }
 
+// Categorías del historial: mapea el emoji con el que ya empieza cada línea
+// (puesto por pushHistory/push_history) a un filtro legible. Cualquier
+// prefijo no listado cae en "Otros" -- no hace falta mantener esto muy
+// exhaustivo, solo cubre lo que más se acumula.
+const HISTORY_CATEGORIES = [
+  { key: 'hito',     label: '🏆 Hitos',        prefixes: ['🏆'] },
+  { key: 'vidas',    label: '💔 Vidas',        prefixes: ['💔'] },
+  { key: 'capturas', label: '🆕 Capturas',     prefixes: ['🆕', '✨', '🔺'] },
+  { key: 'trades',   label: '🔄 Intercambios', prefixes: ['🔄', '🤝', '🔁'] },
+  { key: 'casino',   label: '🎰 Casino',       prefixes: ['🎟️', '🎉', '🎁'] },
+  { key: 'duelos',   label: '⚔️ Duelos',       prefixes: ['⚔️', '💀'] },
+  { key: 'otros',    label: '📋 Otros',        prefixes: [] },
+];
+function historyCategoryOf(text){
+  for(const c of HISTORY_CATEGORIES){
+    if(c.prefixes.some(p => text.startsWith(p))) return c.key;
+  }
+  return 'otros';
+}
+function historyDayLabel(ts){
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(Date.now() - 86400000);
+  const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  if(sameDay(d, today)) return 'Hoy';
+  if(sameDay(d, yesterday)) return 'Ayer';
+  return d.toLocaleDateString('es-ES', {day:'2-digit', month:'long', year: d.getFullYear()!==today.getFullYear() ? 'numeric' : undefined});
+}
+
 let historyTab = 'news'; // 'news' | 'cemetery'
+let historyFilter = 'all';
+let historySearch = '';
 function setHistoryTab(tab){ historyTab = tab; render(); }
+function setHistoryFilter(cat){ historyFilter = cat; render(); }
+function setHistorySearch(v){ historySearch = v; renderHistoryListOnly(); }
+function renderHistoryListOnly(){
+  // evita perder el foco del input de búsqueda en cada tecleo: solo
+  // repintamos la lista, no toda la vista (que sí hace render() completo).
+  const listEl = document.getElementById('history-list-wrap');
+  if(listEl) listEl.innerHTML = buildHistoryListHtml();
+}
+function buildHistoryListHtml(){
+  const q = historySearch.trim().toLowerCase();
+  const filtered = history.filter(e => {
+    if(historyFilter !== 'all' && historyCategoryOf(e.text) !== historyFilter) return false;
+    if(q && !e.text.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if(filtered.length === 0){
+    return '<div class="empty-state">Nada por aquí con ese filtro.</div>';
+  }
+  // agrupamos por día, conservando el orden (el array ya viene del más
+  // reciente al más antiguo desde pushHistory.unshift).
+  const groups = [];
+  let currentLabel = null, currentArr = null;
+  filtered.forEach(e=>{
+    const label = historyDayLabel(e.ts);
+    if(label !== currentLabel){
+      currentLabel = label;
+      currentArr = [];
+      groups.push({ label, items: currentArr });
+    }
+    currentArr.push(e);
+  });
+  return groups.map(g => `
+    <div class="history-day-label">${g.label}</div>
+    ${g.items.map(e=> `
+      <div class="history-item">
+        <span class="h-text">${e.text}</span>
+        <span class="h-time mono">${new Date(e.ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>`).join('')}
+  `).join('');
+}
 function renderHistory(app){
   const tabsHtml = `
     <div class="subtabs">
@@ -3941,15 +4061,15 @@ function renderHistory(app){
     app.innerHTML = tabsHtml + '<div class="empty-state">Aún no hay nada en el historial.</div>';
     return;
   }
+  const presentCats = new Set(history.map(e=>historyCategoryOf(e.text)));
+  const chips = [{key:'all', label:'Todo'}, ...HISTORY_CATEGORIES.filter(c=>presentCats.has(c.key))];
   app.innerHTML = tabsHtml + `
     <div class="section-label">Historial</div>
-    <div class="history-list">
-      ${history.map(e=> `
-        <div class="history-item">
-          <span class="h-text">${e.text}</span>
-          <span class="h-time mono">${fmtTime(e.ts)}</span>
-        </div>`).join('')}
+    <input type="text" class="history-search" placeholder="Buscar en el historial..." value="${historySearch.replace(/"/g,'&quot;')}" oninput="setHistorySearch(this.value)">
+    <div class="history-filter-row">
+      ${chips.map(c=>`<button class="history-chip ${historyFilter===c.key?'active':''}" onclick="setHistoryFilter('${c.key}')">${c.label}</button>`).join('')}
     </div>
+    <div class="history-list" id="history-list-wrap">${buildHistoryListHtml()}</div>
   `;
 }
 function renderCemeteryTab(app, tabsHtml){
@@ -6697,9 +6817,9 @@ async function resolveChallengeReward(winner, loser){
     await addTickets(loser, -stolen, `Perdió un desafío contra ${NAMES[winner]}`);
     await addTickets(winner, stolen, `Ganó un desafío contra ${NAMES[loser]} (+${stolen} tickets robados)`);
   } else if(stakeId === 'steal_heart'){
-    hearts[loser] = Math.max((hearts[loser]??20) - 1, -1);
-    hearts[winner] = Math.min((hearts[winner]??20) + 1, 20);
-    pushHistory(`💔 ${NAMES[winner]} le robó 1 vida a ${NAMES[loser]} en un desafío (${NAMES[winner]}: ${hearts[winner]}/20, ${NAMES[loser]}: ${hearts[loser]}/20)`);
+    hearts[loser] = Math.max((hearts[loser]??20) - 2, -1);
+    hearts[winner] = Math.min((hearts[winner]??20) + 2, 20);
+    pushHistory(`💔 ${NAMES[winner]} le robó 2 vidas a ${NAMES[loser]} en un desafío (${NAMES[winner]}: ${hearts[winner]}/20, ${NAMES[loser]}: ${hearts[loser]}/20)`);
     render();
     const ok1 = await saveProfile(winner); if(!ok1) queueRetry('profile:'+winner, ()=>saveProfile(winner));
     const ok2 = await saveProfile(loser); if(!ok2) queueRetry('profile:'+loser, ()=>saveProfile(loser));

@@ -3499,13 +3499,12 @@ function pushHistory(text){
    salir hasta que haya algo nuevo desde la ultima vez que se vio en ESTE
    dispositivo/navegador (se recuerda con localStorage, igual que el volumen). ---- */
 const NEWS_SEEN_KEY = 'triolocke_news_last_seen_ts';
-// Categorías que cuentan como "novedad" para el popup y para el aviso del
-// nav: muertes (💔), shinies (✨), capturas nuevas (🆕), intercambios (🔄),
-// evoluciones (🔺), lotería (🎉) y hitos de nivel cap superados (🏆).
-// Deliberadamente fuera: tickets sueltos, apuestas de casino, normas,
-// pagos de habilidad -- eso es ruido de fondo, no algo que apetezca leer
-// en un aviso.
-const NEWS_RELEVANT_PREFIXES = ['💔', '✨', '🆕', '🔄', '🔺', '🎉', '🏆'];
+// Solo estas categorías cuentan como "novedad" para el popup y para el aviso del
+// nav: shinies (✨), capturas nuevas (🆕), intercambios (🔄), evoluciones (🔺),
+// lotería (🎉) y hitos de nivel cap superados (🏆). Las muertes (💔) tienen
+// SU PROPIO popup dedicado (la baraja de lápidas, ver showTombPopupIfAny)
+// así que aquí las dejamos fuera aposta, para no avisar dos veces de lo mismo.
+const NEWS_RELEVANT_PREFIXES = ['✨', '🆕', '🔄', '🔺', '🎉', '🏆'];
 function isNewsRelevant(text){
   return NEWS_RELEVANT_PREFIXES.some(p => text.startsWith(p));
 }
@@ -3542,6 +3541,90 @@ function newsRelativeTime(ts){
   const diffH = Math.round(diffMin/60);
   if(diffH < 24) return `hace ${diffH}h`;
   return `hace ${Math.round(diffH/24)}d`;
+}
+
+// ===== Popup automático de lápidas al abrir la página =====
+// A diferencia de la baraja de la pestaña Cementerio (que muestra TODOS los
+// caídos y siempre empieza desde arriba), esto solo salta si hay muertes
+// NUEVAS desde la última vez que se abrió la web en este dispositivo -- y
+// solo esas, no el cementerio entero.
+const CEMETERY_SEEN_KEY = 'triolocke_cemetery_last_seen_ts';
+let tombPopupQueue = [];
+let tombPopupAnimating = false;
+
+function showTombPopupIfAny(){
+  const lastSeen = parseInt(localStorage.getItem(CEMETERY_SEEN_KEY) || '0', 10);
+  const all = TRAINERS.flatMap(t => (graveyard[t]||[]).map(g => ({...g, trainer: t})));
+  if(!lastSeen){
+    // primera vez en este dispositivo: no bombardeamos con TODO el
+    // cementerio de golpe, solo marcamos el punto de partida.
+    localStorage.setItem(CEMETERY_SEEN_KEY, String(Date.now()));
+    return;
+  }
+  const nuevas = all.filter(g => g.diedAt > lastSeen).sort((a,b)=> b.diedAt - a.diedAt);
+  localStorage.setItem(CEMETERY_SEEN_KEY, String(Date.now()));
+  if(nuevas.length === 0) return;
+
+  tombPopupQueue = nuevas;
+  const tryOpen = () => {
+    if(document.getElementById('modal-overlay')){
+      // ya hay otro modal abierto (p.ej. el de Novedades): esperamos a que
+      // lo cierren para no pisarnos los dos overlays a la vez.
+      setTimeout(tryOpen, 300);
+      return;
+    }
+    openModal(`
+      <h3>🪦 ${nuevas.length > 1 ? `${nuevas.length} bajas nuevas` : 'Una baja nueva'}</h3>
+      <div class="tomb-stack-wrap" id="tomb-popup-wrap" style="margin:16px auto 4px;"></div>
+      <div class="modal-actions">
+        <button class="ghost" onclick="closeModal()">Cerrar</button>
+      </div>
+    `, true);
+    renderTombPopupStack();
+  };
+  tryOpen();
+}
+
+function renderTombPopupStack(){
+  const wrap = document.getElementById('tomb-popup-wrap');
+  if(!wrap) return;
+  if(tombPopupQueue.length === 0){ closeModal(); return; }
+  const visible = tombPopupQueue.slice(0, 5);
+  wrap.innerHTML = visible.map((g, depth)=>{
+    const { date, loc } = jokeDeathDetails(g);
+    const cardId = `tomb-popup-card-${depth}`;
+    const isTop = depth === 0;
+    const offset = depth * 10;
+    const rotate = depth === 0 ? 0 : (depth % 2 === 0 ? 1 : -1) * (depth * 1.5);
+    const style = `transform: translateY(${offset}px) scale(${1 - depth*0.04}) rotate(${rotate}deg); z-index:${100-depth};`;
+    return `
+      <div id="${cardId}" class="tomb-card" style="${style}" ${isTop ? `onclick="dismissTombPopupCard('${cardId}')"` : ''}>
+        <div class="tomb-card-rip">R · I · P</div>
+        <img loading="lazy" src="${g.sprite}" alt="${g.speciesName}">
+        <div class="tomb-card-name">${g.nickname}</div>
+        <div class="tomb-card-species">${g.speciesName.replace(/-/g,' ')} · Nv.${g.level}</div>
+        <div class="tomb-card-trainer">${NAMES[g.trainer]}</div>
+        <div class="tomb-card-divider"></div>
+        <div class="tomb-card-line">📅 <b>${date}</b></div>
+        <div class="tomb-card-line">📍 <b>${loc}</b></div>
+        ${isTop ? '<div class="tomb-card-tap">Toca para pasar a la siguiente</div>' : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function dismissTombPopupCard(cardId){
+  if(tombPopupAnimating) return;
+  const el = document.getElementById(cardId);
+  if(!el) return;
+  tombPopupAnimating = true;
+  el.classList.add('exiting');
+  playSound('cardFlip');
+  setTimeout(()=>{
+    tombPopupQueue.shift();
+    tombPopupAnimating = false;
+    renderTombPopupStack();
+  }, 420);
 }
 
 async function addTickets(t, amount, reason){
@@ -7950,6 +8033,7 @@ async function deleteTradeRecord(id){
   await seedDefaultNormasIfMissing();
   render();
   showNewsPopupIfAny();
+  showTombPopupIfAny();
   setInterval(async ()=>{
     if(document.getElementById('modal-overlay') || duelSpinning || rouletteSpinning || slotSpinning || slotJackpotSpinning || loteriaDrawing || bjDealing || nineDealing || finalWheelSpinningWinner || finalWheelSpinningLoser || match1LoserWheelSpinning || sancionWheelSpinning || eggWheelSpinning || cemeteryAnimating || (view==='final' && finalState && finalState.unlocked)) return; // don't refresh mid-edit, mid-spin, o mientras se está revelando LA FINAL
     const changed = await loadAll();

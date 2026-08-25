@@ -702,6 +702,43 @@ button.ghost:hover{ color:var(--silver-bright); border-color: var(--accent-dim);
 .tomb-meta{ font-size:10px; color: var(--silver-dim); margin-top:4px; }
 .tomb-date{ font-size:9px; color: var(--silver-dim); opacity:.6; margin-top:4px; }
 
+.tomb-stack-wrap{
+  position:relative; max-width:340px; height:420px; margin: 24px auto 10px;
+}
+.tomb-stack-hint{
+  text-align:center; font-family:'Rajdhani',sans-serif; font-size:12px; color: var(--silver-dim);
+  letter-spacing:.5px; margin-top:6px;
+}
+.tomb-card{
+  position:absolute; inset:0; border-radius:18px; cursor:pointer; user-select:none;
+  background: linear-gradient(165deg, #1c1712 0%, #100d09 100%);
+  border:1px solid var(--border);
+  box-shadow: 0 14px 34px rgba(0,0,0,.5);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding: 26px 20px; text-align:center;
+  transition: transform .4s cubic-bezier(.22,1,.36,1), opacity .4s ease;
+}
+.tomb-card.exiting{
+  transition: transform .45s cubic-bezier(.5,-0.2,.7,.3), opacity .4s ease .05s;
+  transform: translateX(140%) rotate(24deg) !important;
+  opacity: 0;
+}
+.tomb-card-rip{
+  font-family:'Cinzel',serif; font-size:13px; letter-spacing:4px; color: var(--danger);
+  text-shadow: 0 0 10px rgba(224,67,95,0.4); margin-bottom:10px;
+}
+.tomb-card img{ width:96px; height:96px; filter: grayscale(1) brightness(.9); image-rendering:pixelated; margin-bottom:8px; }
+.tomb-card-name{ font-family:'Cinzel',serif; font-size:20px; font-weight:700; color: var(--silver-bright); }
+.tomb-card-species{ font-size:12px; color: var(--silver-dim); text-transform:capitalize; margin-top:2px; }
+.tomb-card-trainer{ font-size:11px; color: var(--gold); margin-top:8px; letter-spacing:.5px; }
+.tomb-card-divider{ width:60%; height:1px; background: var(--border); margin:12px 0; }
+.tomb-card-line{ font-size:11px; color: var(--silver-dim); line-height:1.7; }
+.tomb-card-line b{ color: var(--silver-bright); font-weight:600; }
+.tomb-card-tap{
+  position:absolute; bottom:14px; font-size:9px; color: var(--silver-dim); opacity:.5;
+  letter-spacing:1px; text-transform:uppercase;
+}
+
 .box-group{ margin-bottom:18px; }
 .box-group-label{
   font-family:'Rajdhani', sans-serif; font-size:13px; font-weight:700; letter-spacing:.5px;
@@ -4007,7 +4044,11 @@ function historyDayLabel(ts){
 let historyTab = 'news'; // 'news' | 'cemetery'
 let historyFilter = 'all';
 let historySearch = '';
-function setHistoryTab(tab){ historyTab = tab; render(); }
+function setHistoryTab(tab){
+  historyTab = tab;
+  if(tab === 'cemetery') cemeteryTopIndex = 0; // cada vez que entras, la baraja empieza desde arriba
+  render();
+}
 function setHistoryFilter(cat){ historyFilter = cat; render(); }
 function setHistorySearch(v){ historySearch = v; renderHistoryListOnly(); }
 function renderHistoryListOnly(){
@@ -4072,6 +4113,56 @@ function renderHistory(app){
     <div class="history-list" id="history-list-wrap">${buildHistoryListHtml()}</div>
   `;
 }
+// ===== Cementerio: fechas y sitios de "muerte" de coña =====
+// El juego casi nunca informa de dónde/cuándo murió un Pokémon de verdad
+// (diedAtLocation casi siempre viene vacío), así que en vez de dejarlo en
+// blanco le inventamos algo random -- pero SIEMPRE la misma broma para la
+// misma lápida (hash determinista sobre sus propios datos), para que no
+// cambie cada vez que se re-pinta la pantalla.
+const DEATH_JOKE_DATES = [
+  '11 de septiembre', '28 de diciembre (Día de los Santos Inocentes)', 'Viernes 13',
+  'Nochevieja, a las 23:59', 'un 29 de febrero que no tocaba', '1 de abril',
+  'el día del examen final', 'justo antes de evolucionar', 'a las 3 de la mañana sin motivo',
+  'durante la final del Mundial', 'el día que subió la luz', 'cuando cortaron la wifi de casa',
+  'un martes cualquiera de room2', 'el día que Windows se actualizó solo',
+  'hace exactamente 3 años, 2 meses y 14 días', 'justo al cobrar la paga (qué desperdicio)',
+  'el mismo día que se estrenó la temporada nueva', 'en pleno directo',
+];
+const DEATH_JOKE_LOCATIONS = [
+  'Nigeria', 'Níger', "Ca n'Anglada", 'Parc Vallès', 'Sabadell', 'Torrequebrada',
+  'la ciudad donde veranea el Joel', 'Torredelosnabos', 'Ascent', 'Bind', 'mid de Ascent', 'larga de Pearl',
+  'Heavy Rain City', 'Ciudad Comercio', 'Pueblo Tomate',
+];
+function jokeHash(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+function jokeDeathDetails(tomb){
+  const seed = `${tomb.trainer}|${tomb.nickname}|${tomb.speciesName}|${tomb.diedAt}`;
+  const h = jokeHash(seed);
+  const date = DEATH_JOKE_DATES[h % DEATH_JOKE_DATES.length];
+  const loc = DEATH_JOKE_LOCATIONS[Math.floor(h/7) % DEATH_JOKE_LOCATIONS.length];
+  return { date, loc };
+}
+
+let cemeteryTopIndex = 0; // qué lápida está arriba del todo de la baraja ahora mismo
+let cemeteryAnimating = false; // true mientras una lápida está volando fuera de pantalla
+
+function dismissTomb(cardId){
+  if(cemeteryAnimating) return;
+  const el = document.getElementById(cardId);
+  if(!el) return;
+  cemeteryAnimating = true;
+  el.classList.add('exiting');
+  playSound('cardFlip');
+  setTimeout(()=>{
+    cemeteryTopIndex++;
+    cemeteryAnimating = false;
+    render();
+  }, 420);
+}
+
 function renderCemeteryTab(app, tabsHtml){
   const all = TRAINERS.flatMap(t => (graveyard[t]||[]).map(g => ({...g, trainer: t})))
     .sort((a,b) => b.diedAt - a.diedAt);
@@ -4079,20 +4170,40 @@ function renderCemeteryTab(app, tabsHtml){
     app.innerHTML = tabsHtml + '<div class="empty-state">Todavía no ha caído ninguno. 🙏</div>';
     return;
   }
+  if(cemeteryTopIndex >= all.length){
+    app.innerHTML = tabsHtml + `
+      <div class="section-label">🪦 Cementerio (${all.length})</div>
+      <div class="empty-state">Has repasado a todos los caídos. 🙏<br><span style="font-size:11px;opacity:.7;">(vuelve a entrar en esta pestaña para verlos otra vez)</span></div>
+    `;
+    return;
+  }
+  const visible = all.slice(cemeteryTopIndex, cemeteryTopIndex + 5); // solo pintamos 5 en el DOM, de sobra para el efecto
   app.innerHTML = tabsHtml + `
-    <div class="section-label">🪦 Cementerio (${all.length})</div>
-    <div class="cemetery-grid">
-      ${all.map(g=>`
-        <div class="tomb">
-          <img loading="lazy" src="${g.sprite}" alt="${g.speciesName}">
-          <div class="tomb-name">${g.nickname}</div>
-          <div class="tomb-species">${g.speciesName.replace(/-/g,' ')}</div>
-          <div class="tomb-meta">Nv.${g.level} · ${NAMES[g.trainer]}</div>
-          ${g.diedAtLocation ? `<div class="tomb-meta" style="opacity:.75;">📍 ${g.diedAtLocation}</div>` : ''}
-          <div class="tomb-date">${fmtTime(g.diedAt)}</div>
-        </div>
-      `).join('')}
+    <div class="section-label">🪦 Cementerio (${all.length - cemeteryTopIndex} por ver)</div>
+    <div class="tomb-stack-wrap">
+      ${visible.map((g, depth)=>{
+        const { date, loc } = jokeDeathDetails(g);
+        const cardId = `tomb-card-${cemeteryTopIndex + depth}`;
+        const isTop = depth === 0;
+        const offset = depth * 10;
+        const rotate = depth === 0 ? 0 : (depth % 2 === 0 ? 1 : -1) * (depth * 1.5);
+        const style = `transform: translateY(${offset}px) scale(${1 - depth*0.04}) rotate(${rotate}deg); z-index:${100-depth};`;
+        return `
+          <div id="${cardId}" class="tomb-card" style="${style}" ${isTop ? `onclick="dismissTomb('${cardId}')"` : ''}>
+            <div class="tomb-card-rip">R · I · P</div>
+            <img loading="lazy" src="${g.sprite}" alt="${g.speciesName}">
+            <div class="tomb-card-name">${g.nickname}</div>
+            <div class="tomb-card-species">${g.speciesName.replace(/-/g,' ')} · Nv.${g.level}</div>
+            <div class="tomb-card-trainer">${NAMES[g.trainer]}</div>
+            <div class="tomb-card-divider"></div>
+            <div class="tomb-card-line">📅 <b>${date}</b></div>
+            <div class="tomb-card-line">📍 <b>${loc}</b></div>
+            ${isTop ? '<div class="tomb-card-tap">Toca para pasar a la siguiente</div>' : ''}
+          </div>
+        `;
+      }).join('')}
     </div>
+    <div class="tomb-stack-hint">${all.length - cemeteryTopIndex} lápida${all.length-cemeteryTopIndex===1?'':'s'} en el mazo</div>
   `;
 }
 
@@ -7840,7 +7951,7 @@ async function deleteTradeRecord(id){
   render();
   showNewsPopupIfAny();
   setInterval(async ()=>{
-    if(document.getElementById('modal-overlay') || duelSpinning || rouletteSpinning || slotSpinning || slotJackpotSpinning || loteriaDrawing || bjDealing || nineDealing || finalWheelSpinningWinner || finalWheelSpinningLoser || match1LoserWheelSpinning || sancionWheelSpinning || eggWheelSpinning || (view==='final' && finalState && finalState.unlocked)) return; // don't refresh mid-edit, mid-spin, o mientras se está revelando LA FINAL
+    if(document.getElementById('modal-overlay') || duelSpinning || rouletteSpinning || slotSpinning || slotJackpotSpinning || loteriaDrawing || bjDealing || nineDealing || finalWheelSpinningWinner || finalWheelSpinningLoser || match1LoserWheelSpinning || sancionWheelSpinning || eggWheelSpinning || cemeteryAnimating || (view==='final' && finalState && finalState.unlocked)) return; // don't refresh mid-edit, mid-spin, o mientras se está revelando LA FINAL
     const changed = await loadAll();
     if(changed) render(); // si no ha cambiado nada, nos ahorramos reconstruir toda la pantalla
   }, 6000);

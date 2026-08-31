@@ -2544,6 +2544,18 @@ const MATCH1_LOSER_WHEEL = [
   { label: 'Se cambia un Pokémon de tu equipo (elegido por los otros dos) por un huevo random', hearts: 0 },
   { label: 'Suerte: solo pierdes 1 vida', hearts: 1 }
 ];
+// A partir de ahora los combates son 1 vs 1 directo (sin el sorteo de quién
+// juega primero ni el "bye" del torneo de 3) -- se fusiona en una sola rueda
+// lo que antes eran dos ruletas separadas de perdedor (la del Combate 1,
+// solo castigos, y la de la Final, mezcla de premios y castigos). El torneo
+// viejo con "bye" se deja intacto en el código por si algún día vuelve a
+// hacer falta (ver finalLoserOf) -- esto solo se usa cuando no hay bye.
+const MERGED_LOSER_WHEEL = [
+  ...LOSER_PRIZES,
+  ...MATCH1_LOSER_WHEEL.map(o => o.label),
+  'Joel: RATA',
+  'Joel: PAYASO',
+];
 
 let hearts = {}, teams = {}, history = [], tradesActive = [], tradesHistory = [];
 let tickets = {}, pendingPrizes = {};
@@ -6559,18 +6571,20 @@ function renderWheelAndBracket(){
 
   let match1RewardSection = '';
   if(match1Winner){
-    match1RewardSection = `
+    match1RewardSection = bye ? `
       <div class="spin-note" style="margin-top:-4px;">🎁 ${NAMES[match1.p1]} y ${NAMES[match1.p2]} se llevan <strong style="color:var(--silver-bright)">1 captura extra</strong> cada uno por el Combate 1</div>
       <div class="section-sub" style="margin-top:6px;">Ruleta del perdedor del Combate 1</div>
       <div class="final-wheels-row">
         ${renderMatch1LoserWheelBlock()}
       </div>
+    ` : `
+      <div class="spin-note" style="margin-top:-4px;">🎁 ${NAMES[match1.p1]} y ${NAMES[match1.p2]} se llevan <strong style="color:var(--silver-bright)">1 captura extra</strong> cada uno por jugar</div>
     `;
   }
 
   let finalPrizeSection = '';
   if(finalWinner){
-    const finalLoser = [match1Winner, bye].find(p=> p!==finalWinner);
+    const finalLoser = finalLoserOf();
     if(finalWinnerPrize && finalLoserPrize){
       finalPrizeSection = `
         <div class="champion-banner" style="text-align:center;">
@@ -6579,7 +6593,7 @@ function renderWheelAndBracket(){
             ${NAMES[finalWinner]} se lleva: <strong style="color:var(--silver-bright)">${finalWinnerPrize}</strong><br>
             ${NAMES[finalLoser]} se lleva: <strong style="color:var(--silver-bright)">${finalLoserPrize}</strong>
           </div>
-          ${match1LoserPrize ? `<button class="primary" onclick="finishDuel()">Guardar resultado y preparar la próxima semana</button>` : `<div class="spin-note">Falta girar la ruleta del perdedor del Combate 1 para poder cerrar la semana</div>`}
+          ${(!bye || match1LoserPrize) ? `<button class="primary" onclick="finishDuel()">Guardar resultado y preparar la próxima semana</button>` : `<div class="spin-note">Falta girar la ruleta del perdedor del Combate 1 para poder cerrar la semana</div>`}
         </div>
       `;
     } else {
@@ -6604,7 +6618,7 @@ function renderWheelAndBracket(){
         </div>
         ${m1Games.length>0 ? `<div class="bo3-score">${NAMES[match1.p1]} ${m1Games.filter(g=>g===match1.p1).length} - ${m1Games.filter(g=>g===match1.p2).length} ${NAMES[match1.p2]}</div>` : ''}
         ${renderRivalryLine(match1.p1, match1.p2)}
-        <div class="bracket-bye">${NAMES[bye]} pasa directo a la final</div>
+        ${bye ? `<div class="bracket-bye">${NAMES[bye]} pasa directo a la final</div>` : ''}
       </div>
 
       ${m1Games.length>0 ? `<div class="bo3-narration">${duelState.match1Narration || 'Resultado registrado.'}<div class="bo3-reader-note">🎙️ Lo tiene que leer el que no está combatiendo</div></div>` : ''}
@@ -6613,7 +6627,7 @@ function renderWheelAndBracket(){
 
       ${match1RewardSection}
 
-      ${match1Winner ? `
+      ${match1Winner && bye ? `
       <div class="bracket-match ${finalWinner?'':'active'}">
         <div class="match-label">Final ${fGames.length>0 && !finalWinner ? `· Juego ${Math.min(fGames.length+1,3)} de 3` : ''}</div>
         <div class="bracket-vs">
@@ -6633,11 +6647,21 @@ function renderWheelAndBracket(){
   `;
 }
 
+function finalLoserOf(){
+  // con "bye" real (torneo viejo de 3): el perdedor de la final es el que
+  // no ganó, entre el ganador del Combate 1 y el que tenía el pase directo.
+  // sin "bye" (combate directo nuevo, 1 vs 1): el perdedor es simplemente
+  // el otro participante del propio Combate 1.
+  const { match1, bye, match1Winner, finalWinner } = duelState;
+  if(bye) return [match1Winner, bye].find(p=> p!==finalWinner);
+  return [match1.p1, match1.p2].find(p=> p!==match1Winner);
+}
+
 function renderPrizeWheelBlock(role){
   const prizeSet = role==='winner' ? duelState.finalWinnerPrize : duelState.finalLoserPrize;
-  const finalLoser = [duelState.match1Winner, duelState.bye].find(p=> p!==duelState.finalWinner);
+  const finalLoser = finalLoserOf();
   const trainer = role==='winner' ? duelState.finalWinner : finalLoser;
-  const prizes = role==='winner' ? WINNER_PRIZES : LOSER_PRIZES;
+  const prizes = role==='winner' ? WINNER_PRIZES : (duelState.bye ? LOSER_PRIZES : MERGED_LOSER_WHEEL);
   const spinning = role==='winner' ? finalWheelSpinningWinner : finalWheelSpinningLoser;
   const wheelId = role==='winner' ? 'final-wheel-winner' : 'final-wheel-loser';
   const title = role==='winner' ? `🏆 Ruleta del ganador · ${NAMES[trainer]}` : `Ruleta del perdedor · ${NAMES[trainer]}`;
@@ -6765,7 +6789,9 @@ function renderDuelTallyAndHistory(){
         <div class="dh-date">${fmtTime(new Date(d.date).getTime())}</div>
         <div>${d.isChallenge
           ? `${NAMES[d.match1.p1]} vs ${NAMES[d.match1.p2]} → <span class="dh-champ">ganó ${NAMES[d.match1.winner]}</span> (desafío 1v1)`
-          : `${NAMES[d.match1.p1]} vs ${NAMES[d.match1.p2]} → ganó ${NAMES[d.match1.winner]} · Final: ${NAMES[d.final.p1]} vs ${NAMES[d.final.p2]} → <span class="dh-champ">campeón ${NAMES[d.champion]}</span>`
+          : d.final
+            ? `${NAMES[d.match1.p1]} vs ${NAMES[d.match1.p2]} → ganó ${NAMES[d.match1.winner]} · Final: ${NAMES[d.final.p1]} vs ${NAMES[d.final.p2]} → <span class="dh-champ">campeón ${NAMES[d.champion]}</span>`
+            : `${NAMES[d.match1.p1]} vs ${NAMES[d.match1.p2]} → <span class="dh-champ">ganó ${NAMES[d.champion]}</span>`
         }</div>
         ${d.match1WinnerReward ? `<div class="dh-reward">🎁 ${NAMES[d.match1.p1]} y ${NAMES[d.match1.p2]} +${d.match1WinnerReward} cada uno por el Combate 1</div>` : ''}
         ${d.match1LoserPrize ? `<div class="dh-reward">💀 ${NAMES[[d.match1.p1, d.match1.p2].find(p=>p!==d.match1.winner)]} → ${d.match1LoserPrize}</div>` : ''}
@@ -6801,7 +6827,11 @@ async function submitScheduleDuel(){
   const dt = document.getElementById('duel-datetime').value;
   const err = document.getElementById('duel-err');
   if(!name || !dt){ err.textContent = 'Rellena el nombre y la fecha.'; return; }
-  duelState = { scheduled: { name, datetime: dt }, picks:[], bye:null, match1:null, match1Winner:null, match1LoserPrize:null, finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null };
+  // Combate directo: Alex vs Iker sin sorteo de por medio (Joel se retiró
+  // del reto, así que ya no hay tercer contendiente ni "bye"). Se deja
+  // "bye" a null a propósito -- de eso dependen finalLoserOf() y el resto
+  // del flujo simplificado para saber que no hay segunda ronda que jugar.
+  duelState = { scheduled: { name, datetime: dt }, picks:['alex','iker'], bye:null, match1:{p1:'alex',p2:'iker'}, match1Games:[], match1Winner:null, match1LoserPrize:null, finalGames:[], finalWinner:null, finalWinnerPrize:null, finalLoserPrize:null };
   duelWheelRotation = 0;
   finalWheelRotationWinner = 0;
   finalWheelRotationLoser = 0;
@@ -7061,7 +7091,13 @@ async function recordBo3Game(matchKey, gameWinner){
 
   if(matchDecided){
     if(isFinal) duelState.finalWinner = matchWinner;
-    else duelState.match1Winner = matchWinner;
+    else {
+      duelState.match1Winner = matchWinner;
+      // Combate directo (sin "bye" real, ver más abajo en submitScheduleDuel):
+      // no hay una segunda ronda que jugar, el ganador del único combate ya
+      // es el ganador final -- se pasa directo a las ruletas de recompensa.
+      if(!duelState.bye) duelState.finalWinner = matchWinner;
+    }
   }
   const ok = await saveDuelState();
   if(!ok) queueRetry('duel', saveDuelState);
@@ -7253,7 +7289,7 @@ function spinFinalWheel(role){
   const spinningFlag = role==='winner' ? finalWheelSpinningWinner : finalWheelSpinningLoser;
   const prizeAlreadySet = role==='winner' ? duelState.finalWinnerPrize : duelState.finalLoserPrize;
   if(spinningFlag || prizeAlreadySet) return;
-  const prizes = role==='winner' ? WINNER_PRIZES : LOSER_PRIZES;
+  const prizes = role==='winner' ? WINNER_PRIZES : (duelState.bye ? LOSER_PRIZES : MERGED_LOSER_WHEEL);
   const wheelId = role==='winner' ? 'final-wheel-winner' : 'final-wheel-loser';
 
   if(role==='winner') finalWheelSpinningWinner = true; else finalWheelSpinningLoser = true;
@@ -7276,7 +7312,7 @@ function spinFinalWheel(role){
 
   setTimeout(async ()=>{
     const prize = prizes[idx];
-    const trainer = role==='winner' ? duelState.finalWinner : [duelState.match1Winner, duelState.bye].find(p=> p!==duelState.finalWinner);
+    const trainer = role==='winner' ? duelState.finalWinner : finalLoserOf();
     if(role==='winner'){
       finalWheelSpinningWinner = false;
       duelState.finalWinnerPrize = prize;
@@ -7295,13 +7331,13 @@ function spinFinalWheel(role){
 
 async function finishDuel(){
   const { scheduled, bye, match1, match1Winner, match1LoserPrize, finalWinner, finalWinnerPrize, finalLoserPrize } = duelState;
-  const finalLoser = [match1Winner, bye].find(p=> p!==finalWinner);
+  const finalLoser = finalLoserOf();
   duelHistory.unshift({
     id: crypto.randomUUID(),
     name: scheduled.name,
     date: scheduled.datetime,
     match1: { p1: match1.p1, p2: match1.p2, winner: match1Winner },
-    final: { p1: match1Winner, p2: bye, winner: finalWinner },
+    final: bye ? { p1: match1Winner, p2: bye, winner: finalWinner } : null,
     champion: finalWinner,
     match1WinnerReward: '1 captura extra',
     match1LoserPrize,

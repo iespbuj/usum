@@ -145,10 +145,10 @@ main{ max-width: 1000px; margin: 0 auto; padding: 20px; }
 .profile-card.rank-3{ order:3; opacity: .92; }
 .profile-card.retired{ filter: grayscale(.5); opacity: .8; overflow:hidden; }
 .shame-banner{
-  position:absolute; top:18px; left:-38px; width:160px; padding:4px 0; text-align:center;
+  position:absolute; top:22px; left:-52px; width:230px; padding:5px 0; text-align:center;
   background: var(--danger); color:#fff; transform: rotate(-40deg); z-index:5;
-  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:12px; letter-spacing:1.5px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:11px; letter-spacing:1px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4); white-space:nowrap;
 }
 
 .rank-badge{
@@ -4143,7 +4143,7 @@ function renderHome(app){
         const teamCount = teams[t].length;
         return `
         <div class="profile-card rank-${r} ${RETIRED_TRAINERS.has(t)?'retired':''}" onclick="go('profile','${t}')">
-          ${RETIRED_TRAINERS.has(t) ? `<div class="shame-banner">🚩 LO DEJÓ</div>` : ''}
+          ${RETIRED_TRAINERS.has(t) ? `<div class="shame-banner">🚩 TRAIDOR, APOLLARDAO</div>` : ''}
           <div class="medal-badge ${rankOf[t].medal}">${rankOf[t].icon}</div>
           ${locationName[t] ? `<div class="location-pill">📍 ${locationName[t]}</div>` : ''}
           <div class="trainer-name">${NAMES[t]}</div>

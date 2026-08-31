@@ -143,6 +143,13 @@ main{ max-width: 1000px; margin: 0 auto; padding: 20px; }
 .profile-card.rank-1{ order:2; padding-top: 30px; padding-bottom: 28px; border-color: var(--gold); box-shadow: 0 0 22px rgba(230,182,86,0.25); }
 .profile-card.rank-2{ order:1; opacity: .96; }
 .profile-card.rank-3{ order:3; opacity: .92; }
+.profile-card.retired{ filter: grayscale(.5); opacity: .8; overflow:hidden; }
+.shame-banner{
+  position:absolute; top:18px; left:-38px; width:160px; padding:4px 0; text-align:center;
+  background: var(--danger); color:#fff; transform: rotate(-40deg); z-index:5;
+  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:12px; letter-spacing:1.5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
 
 .rank-badge{
   position:absolute; top:-14px; left:50%; transform:translateX(-50%);
@@ -2507,6 +2514,11 @@ const WIN_REACTIONS = [
 
 const TRAINERS = ['iker','joel','alex'];
 const NAMES = { iker:'Iker', joel:'Joel', alex:'Alex' };
+// Entrenadores que han abandonado el reto: siguen apareciendo en toda la web
+// tal cual (perfil, historial, cementerio...), pero quedan descalificados de
+// LA FINAL (nunca ganan estrella, aunque su barra se siga viendo para
+// comparar) y llevan un cartel bien visible en su tarjeta de la portada.
+const RETIRED_TRAINERS = new Set(['joel']);
 
 const LOSER_PRIZES = ['1 captura extra', '1 Menta de Naturaleza', '5 tickets', '10 tickets', 'Banda Focus', 'Pesa Recia', 'Baya Meloc', 'Pierde 3 vidas', 'Pierde 1 vida', '1 Cápsula Habilidad', '1 Cápsula Habilidad', 'Nada'];
 const WINNER_PRIZES = ['2 capturas extra', 'Elegir entre 3 huevos', '2 Mentas de Naturaleza', '10 tickets', '20 tickets', 'Permiso para una ilegalidad', 'Cambiar un Pokémon por otro que quiera de otro equipo', '3 Cápsulas Habilidad'];
@@ -3217,10 +3229,14 @@ function shuffleArr(arr){
   return a;
 }
 function evaluateFinalCategoryPool(){
+  // los retirados (RETIRED_TRAINERS) siguen apareciendo con su barra y su
+  // valor real para comparar, pero quedan fuera del cálculo de quién gana
+  // la estrella -- nunca pueden ser "winners" aunque tengan el número más alto.
+  const eligible = TRAINERS.filter(t => !RETIRED_TRAINERS.has(t));
   return FINAL_CATEGORY_POOL.map(cat=>{
     const values = {}; TRAINERS.forEach(t=> values[t] = cat.compute(t));
-    const maxVal = Math.max(...TRAINERS.map(t=> values[t]));
-    const winners = TRAINERS.filter(t=> values[t] === maxVal);
+    const maxVal = Math.max(...eligible.map(t=> values[t]));
+    const winners = eligible.filter(t=> values[t] === maxVal);
     return { cat, values, maxVal, winners, decisive: winners.length === 1 };
   });
 }
@@ -4126,7 +4142,8 @@ function renderHome(app){
         const wins = combatWinsOf(t);
         const teamCount = teams[t].length;
         return `
-        <div class="profile-card rank-${r}" onclick="go('profile','${t}')">
+        <div class="profile-card rank-${r} ${RETIRED_TRAINERS.has(t)?'retired':''}" onclick="go('profile','${t}')">
+          ${RETIRED_TRAINERS.has(t) ? `<div class="shame-banner">🚩 LO DEJÓ</div>` : ''}
           <div class="medal-badge ${rankOf[t].medal}">${rankOf[t].icon}</div>
           ${locationName[t] ? `<div class="location-pill">📍 ${locationName[t]}</div>` : ''}
           <div class="trainer-name">${NAMES[t]}</div>

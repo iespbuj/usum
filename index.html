@@ -3404,13 +3404,25 @@ function renderFinalMentionsCard(){
     </div>
   `;
 }
+// Total real de cada entrenador: combates ganados (torneos + desafíos) +
+// estrellas repartidas en LA FINAL. Es el mismo criterio que usa el
+// "Marcador" del Temporizador, así que el podio/campeón de LA FINAL tiene
+// que salir de aquí y no solo de las estrellas.
+function finalTotalScoreOf(t){
+  const pts = finalState.pointsAwarded || {};
+  return combatWinsOf(t) + (pts[t]||0);
+}
 function renderFinalPodium(){
   const pts = finalState.pointsAwarded || {};
-  const ranked = [...TRAINERS].sort((a,b)=> (pts[b]||0)-(pts[a]||0));
+  const ranked = [...TRAINERS].sort((a,b)=>{
+    const diff = finalTotalScoreOf(b) - finalTotalScoreOf(a);
+    if(diff !== 0) return diff;
+    return (pts[b]||0)-(pts[a]||0); // desempate: quien más estrellas ganó en LA FINAL
+  });
   const order = [ranked[1], ranked[0], ranked[2]].filter(Boolean);
   return `
     <div class="final-podium-wrap">
-      <div class="section-sub" style="text-align:center;margin-bottom:6px;">🏆 Podio de estrellas de LA FINAL</div>
+      <div class="section-sub" style="text-align:center;margin-bottom:6px;">🏆 Podio de LA FINAL (combates + estrellas)</div>
       <div class="podium final-podium">
         ${order.map(t=>{
           const rank = ranked.indexOf(t)+1;
@@ -3420,7 +3432,8 @@ function renderFinalPodium(){
           <div class="profile-card rank-${rank} final-podium-card ${rank===1?'champion-glow':''}">
             <div class="medal-badge ${medal}">${icon}</div>
             <div class="trainer-name">${NAMES[t]}</div>
-            <div class="hearts-count">${pts[t]||0}<small>⭐</small></div>
+            <div class="hearts-count">${finalTotalScoreOf(t)}<small>total</small></div>
+            <div class="team-count">${combatWinsOf(t)} combates${pts[t]?` + ${pts[t]} ⭐ FINAL`:''}</div>
           </div>`;
         }).join('')}
       </div>
@@ -3430,7 +3443,11 @@ function renderFinalPodium(){
 }
 function renderFinalChampionCard(){
   const pts = finalState.pointsAwarded || {};
-  const ranked = [...TRAINERS].sort((a,b)=> (pts[b]||0)-(pts[a]||0));
+  const ranked = [...TRAINERS].sort((a,b)=>{
+    const diff = finalTotalScoreOf(b) - finalTotalScoreOf(a);
+    if(diff !== 0) return diff;
+    return (pts[b]||0)-(pts[a]||0);
+  });
   const champion = ranked[0];
   if(!finalChampionRevealed){
     return `
@@ -3449,7 +3466,7 @@ function renderFinalChampionCard(){
       <div class="final-champion-name">
         ${name.split('').map((ch,i)=>`<span style="animation-delay:${0.4 + i*0.06}s;">${ch===' '?'&nbsp;':ch}</span>`).join('')}
       </div>
-      <div class="final-champion-sub">${pts[champion]||0} ⭐ estrellas de LA FINAL</div>
+      <div class="final-champion-sub">${finalTotalScoreOf(champion)} puntos totales (${combatWinsOf(champion)} combates${pts[champion]?` + ${pts[champion]} ⭐ FINAL`:''})</div>
     </div>
   `;
 }

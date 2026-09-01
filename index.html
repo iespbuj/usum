@@ -2901,6 +2901,7 @@ let finalRevealStep = 0; // 0 = nada mostrado, va subiendo con la animacion
 let finalCatRevealed = {}; // idx (categoria estrella) -> bool, revelado en dos fases (misterio -> abierta)
 let finalChampionRevealed = false; // el nombre del Campeón Absoluto se revela en dos fases igual
 const FINAL_PASSWORD = 'w alets';
+const LIFE_BUTTON_PASSWORD = 'w ruleta';
 const FINAL_CATEGORY_POOL = [
   { id:'champion',  label:'Campeón de combates',      icon:'🏆', compute:(t)=> combatWinsOf(t), unit:'combates ganados' },
   { id:'richest',   label:'El más rico',               icon:'💰', compute:(t)=> money[t]||0, unit:'monedas' },
@@ -4763,10 +4764,66 @@ function renderCasinoFloor(){
             </div>
           </div>
         </div>
+        <div class="hall-card g-lifebutton" onclick="openLifeButtonModal()">
+          <div class="hall-card-border">
+            <div class="hall-card-inner">
+              <div class="hall-card-icon">❤️</div>
+              <div class="hall-card-title">El botón de la vida</div>
+              <div class="hall-card-sub">Acceso restringido · con contraseña</div>
+              <div class="hall-card-bulbs">${Array.from({length:5}).map(()=>`<div class="slot-bulb"></div>`).join('')}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="casino-floor-hint">Elige una zona para entrar</div>
   `;
+}
+
+/* ---------------- Botón de la vida (con contraseña) ---------------- */
+function openLifeButtonModal(){
+  openModal(`
+    <h3>❤️ El botón de la vida</h3>
+    <div style="font-size:12px;color:var(--silver-dim);margin-bottom:14px;text-align:center;">Esto no es una tirada de suerte. Necesitas la contraseña para acceder.</div>
+    <div class="field" style="max-width:260px;margin:0 auto;">
+      <input type="password" id="life-button-password-input" placeholder="Contraseña" autocomplete="off" onkeydown="if(event.key==='Enter') submitLifeButtonPassword();">
+    </div>
+    <div class="err-msg" id="life-button-password-err"></div>
+    <div class="modal-actions">
+      <button class="ghost" onclick="closeModal()">Cancelar</button>
+      <button class="primary" onclick="submitLifeButtonPassword()">Desbloquear</button>
+    </div>
+  `);
+  const inp = document.getElementById('life-button-password-input');
+  if(inp) inp.focus();
+}
+function submitLifeButtonPassword(){
+  const input = document.getElementById('life-button-password-input');
+  const err = document.getElementById('life-button-password-err');
+  const val = (input ? input.value : '').trim();
+  if(val.toLowerCase() !== LIFE_BUTTON_PASSWORD.toLowerCase()){
+    if(err) err.textContent = 'Contraseña incorrecta.';
+    playSound('lose');
+    if(input){
+      input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+      input.value = '';
+    }
+    return;
+  }
+  openModal(`
+    <h3>❤️ El botón de la vida</h3>
+    <div style="font-size:13px;color:var(--silver-dim);margin-bottom:18px;text-align:center;">Contraseña correcta. Pulsa el botón y suma una vida para <strong style="color:var(--silver-bright)">${NAMES[casinoPlayer]}</strong>.</div>
+    <div style="text-align:center;">
+      <button class="primary" style="font-size:16px;padding:14px 28px;" onclick="pressLifeButton()">❤️ Dame una vida</button>
+    </div>
+  `, false);
+}
+async function pressLifeButton(){
+  closeModal();
+  await addLife(casinoPlayer);
+  playSound('bigwin');
+  fireConfetti({count: 120});
+  toast(`❤️ ${NAMES[casinoPlayer]} ha sumado una vida con el botón de la vida.`);
 }
 
 function openCasinoZone(tab){

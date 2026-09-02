@@ -7286,8 +7286,17 @@ function renderChallengeSection(){
       ${games.length>0 ? `<div class="bo3-score">${NAMES[challenger]} ${wins[challenger]} - ${wins[opponent]} ${NAMES[opponent]}</div>` : ''}
     </div>
     ${games.length>0 ? `<div class="bo3-narration">${challengeState.narration || 'Resultado registrado.'}<div class="bo3-reader-note">🎙️ Lo tiene que leer el que no está combatiendo</div></div>` : ''}
-    ${decided ? `<div class="modal-actions" style="justify-content:center;"><button class="primary" onclick="closeChallenge()">Cerrar desafío</button></div>` : ''}
+    ${decided ? `<div class="modal-actions" style="justify-content:center;"><button class="primary" onclick="closeChallenge()">Cerrar desafío</button></div>` : `<div class="modal-actions" style="justify-content:center;"><button class="ghost" onclick="cancelChallenge()">✖️ Cancelar desafío</button></div>`}
   `;
+}
+async function cancelChallenge(){
+  if(!challengeState) return;
+  const { challenger, opponent } = challengeState;
+  await addTickets(challenger, CHALLENGE_COST, `Desafío contra ${NAMES[opponent]} cancelado (devolución)`);
+  challengeState = null;
+  render();
+  const ok = await saveChallengeState();
+  if(!ok) queueRetry('challenge', saveChallengeState);
 }
 
 async function recordChallengeGame(gameWinner){

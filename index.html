@@ -3413,13 +3413,26 @@ function finalTotalScoreOf(t){
   const pts = finalState.pointsAwarded || {};
   return combatWinsOf(t) + (pts[t]||0);
 }
-function renderFinalPodium(){
+// Un entrenador con la vida a -1 ha perdido su partida (Locke terminado):
+// no puede ganar LA FINAL aunque saque más estrellas o combates que nadie.
+function hasLostLocke(t){
+  return (hearts[t]??0) <= -1;
+}
+// Orden oficial de LA FINAL: primero los que siguen vivos (por puntuación
+// total), y solo después, sin excepción, los que ya perdieron su vida.
+function finalRankedTrainers(){
   const pts = finalState.pointsAwarded || {};
-  const ranked = [...TRAINERS].sort((a,b)=>{
+  return [...TRAINERS].sort((a,b)=>{
+    const lostA = hasLostLocke(a), lostB = hasLostLocke(b);
+    if(lostA !== lostB) return lostA ? 1 : -1;
     const diff = finalTotalScoreOf(b) - finalTotalScoreOf(a);
     if(diff !== 0) return diff;
     return (pts[b]||0)-(pts[a]||0); // desempate: quien más estrellas ganó en LA FINAL
   });
+}
+function renderFinalPodium(){
+  const pts = finalState.pointsAwarded || {};
+  const ranked = finalRankedTrainers();
   const order = [ranked[1], ranked[0], ranked[2]].filter(Boolean);
   return `
     <div class="final-podium-wrap">
@@ -3427,28 +3440,27 @@ function renderFinalPodium(){
       <div class="podium final-podium">
         ${order.map(t=>{
           const rank = ranked.indexOf(t)+1;
+          const lost = hasLostLocke(t);
           const medal = rank===1?'gold':rank===2?'silver':'bronze';
           const icon = rank===1?'🥇':rank===2?'🥈':'🥉';
           return `
-          <div class="profile-card rank-${rank} final-podium-card ${rank===1?'champion-glow':''}">
+          <div class="profile-card rank-${rank} final-podium-card ${rank===1 && !lost?'champion-glow':''} ${lost?'retired':''}">
+            ${lost ? `<div class="shame-banner">💀 PERDIÓ SU VIDA</div>` : ''}
             <div class="medal-badge ${medal}">${icon}</div>
             <div class="trainer-name">${NAMES[t]}</div>
             <div class="hearts-count">${finalTotalScoreOf(t)}<small>total</small></div>
             <div class="team-count">${combatWinsOf(t)} combates${pts[t]?` + ${pts[t]} ⭐ FINAL`:''}</div>
+            ${lost ? `<div class="team-count" style="color:var(--danger);">Vida a -1: no puede ganar LA FINAL</div>` : ''}
           </div>`;
         }).join('')}
       </div>
-      <div class="final-summary-note">Estas estrellas ya se han sumado al marcador de combates de cada uno.</div>
+      <div class="final-summary-note">Estas estrellas ya se han sumado al marcador de combates de cada uno. Quien tiene la vida a -1 queda fuera de la clasificación aunque sume más puntos.</div>
     </div>
   `;
 }
 function renderFinalChampionCard(){
   const pts = finalState.pointsAwarded || {};
-  const ranked = [...TRAINERS].sort((a,b)=>{
-    const diff = finalTotalScoreOf(b) - finalTotalScoreOf(a);
-    if(diff !== 0) return diff;
-    return (pts[b]||0)-(pts[a]||0);
-  });
+  const ranked = finalRankedTrainers();
   const champion = ranked[0];
   if(!finalChampionRevealed){
     return `
